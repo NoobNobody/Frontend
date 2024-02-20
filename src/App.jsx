@@ -1,23 +1,17 @@
 import React from 'react';
-// import JobCategoriesPage from "./JobCategoriesPage";
-import JobOffersPage from "./JobOffersPage";
-import HelloWorld from './HelloWorld';
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import './App.css';
+import Navbar from './components/navbar/Navbar';
+import { RouterProvider } from 'react-router-dom';
+import Router from './router/Router';
 
 function App() {
+  const router = Router();
   return (
     <>
-      <Router>
-        <Routes>
-          <Route exact path="/" element={<p>Strona domowa</p>} />
-          <Route path="/categories" />
-          <Route path="/offers" element={<JobOffersPage />} />
-          <Route path="/praca" />
-          <Route path="/helloworld" element={<HelloWorld />} />
-        </Routes>
-      </Router>
+      <Navbar />
+      <RouterProvider router={router} />
     </>
-  )
+  );
 }
 
 export default App
