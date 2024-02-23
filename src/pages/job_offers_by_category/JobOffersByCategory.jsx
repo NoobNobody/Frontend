@@ -56,6 +56,7 @@ function JobOffersByCategory() {
             selectedSalaryRange: params.get('selectedSalaryRange'),
         };
         setFilters(currentFilters);
+        setQuery(searchQueryFromUrl);
         setSearchQuery(searchQueryFromUrl);
         setCurrentPage(page);
         await fetchData(page, searchQueryFromUrl, currentFilters);
@@ -63,25 +64,28 @@ function JobOffersByCategory() {
 
     const fetchData = async (page, searchQuery = "", currentFilters = filters) => {
         console.log("Fetching data with:", { page, searchQuery, currentFilters });
-        let response;
-        if (searchQuery) {
-            response = await searchJobOffersByPosition(categoryId, page, searchQuery);
-        } else if (Object.values(currentFilters).some(value => value && (Array.isArray(value) ? value.length : true))) {
-            response = await filtrateJobOffers(categoryId, page, currentFilters);
-            console.log("Filtrate: ", response, "Current page: ", page);
-        } else {
-            response = await fetchAllJobOffers(categoryId, page);
-        }
+        try {
+            let response;
+            if (searchQuery) {
+                response = await searchJobOffersByPosition(categoryId, page, searchQuery);
+            } else if (Object.values(currentFilters).some(value => value && (Array.isArray(value) ? value.length : true))) {
+                response = await filtrateJobOffers(categoryId, page, currentFilters);
+                console.log("Filtrate: ", response, "Current page: ", page);
+            } else {
+                response = await fetchAllJobOffers(categoryId, page);
+            }
 
-        if (response) {
             setJobOffers(response.jobOffers);
             setTotalPages(response.totalPages);
             console.log("Setting current page to:", page);
             setCurrentPage(page);
             scrollToTop();
-        } else {
+            setShowAlert(false);
+        } catch (error) {
+            console.error("Error fetching data:", error.message);
             setShowAlert(true);
-            setTimeout(() => setShowAlert(false), 5000);
+            setJobOffers([]);
+            setTotalPages(0);
         }
     };
 

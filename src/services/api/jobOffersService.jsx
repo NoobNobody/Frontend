@@ -12,10 +12,12 @@ const fetchAllJobOffers = async (categoryId, page) => {
 
 const searchJobOffersByPosition = async (categoryId, page, searchQuery) => {
     try {
-        const response = await axios.get(`http://localhost:8000/api/oferty/kategoria/${categoryId}/search/`, { params: { page, search: searchQuery } });
+        const response = await axios.get(`http://localhost:8000/api/oferty/kategoria/${categoryId}/search/`, {
+            params: { page, search: searchQuery }
+        });
         return handleResponse(response);
     } catch (error) {
-        return handleError(error);
+        throw new Error(error.response?.data?.message || "Wystąpił błąd podczas wyszukiwania ofert pracy.");
     }
 };
 
