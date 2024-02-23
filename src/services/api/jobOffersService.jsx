@@ -27,7 +27,7 @@ const filtrateJobOffers = async (categoryId, page, filters) => {
         const response = await axios.get(`http://localhost:8000/api/oferty/filtrowane/${categoryId}/`, { params });
         return handleResponse(response);
     } catch (error) {
-        return handleError(error);
+        throw new Error(error.response?.data?.message || "Wystąpił błąd podczas wyszukiwania ofert pracy.");
     }
 };
 

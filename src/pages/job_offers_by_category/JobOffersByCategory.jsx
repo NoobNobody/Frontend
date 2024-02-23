@@ -42,11 +42,13 @@ function JobOffersByCategory() {
         fetchDataFromUrl();
     }, [location.search, categoryId]);
 
+    // Pobieranie danych manualnie przy pomocy URL
     const fetchDataFromUrl = async () => {
-
         const params = new URLSearchParams(location.search);
         const page = parseInt(params.get('page'), 10) || 1;
         const searchQueryFromUrl = params.get('search') || "";
+        let isValid = true;
+
         let currentFilters = {
             selectedDate: params.get('selectedDate'),
             selectedJobTime: params.getAll('selectedJobTime'),
@@ -55,13 +57,47 @@ function JobOffersByCategory() {
             selectedSalaryType: params.get('selectedSalaryType'),
             selectedSalaryRange: params.get('selectedSalaryRange'),
         };
+
+        if (currentFilters.selectedDate && !dateFilters[currentFilters.selectedDate]) {
+            isValid = false;
+        }
+
+        ['selectedJobTime', 'selectedJobModel', 'selectedJobType'].forEach(filterKey => {
+            if (currentFilters[filterKey].some(value => !filtersCombined[value])) {
+                isValid = false;
+            }
+        });
+
+        // Sprawdź poprawność selectedSalaryType
+        if (currentFilters.selectedSalaryType && !salaryTypes[currentFilters.selectedSalaryType]) {
+            isValid = false;
+        }
+
+        if (currentFilters.selectedSalaryRange && currentFilters.selectedSalaryType) {
+            const ranges = salaryRange[currentFilters.selectedSalaryType + '_range'];
+            if (!ranges.includes(currentFilters.selectedSalaryRange)) {
+                isValid = false;
+            }
+        }
+
+        if (!isValid) {
+            setShowAlert(true);
+            setJobOffers([]);
+            setTotalPages(0);
+            navigate(`/oferty/kategoria/${categoryId}/`);
+            return;
+        }
+
         setFilters(currentFilters);
+        setAppliedFilters(currentFilters);
         setQuery(searchQueryFromUrl);
         setSearchQuery(searchQueryFromUrl);
         setCurrentPage(page);
         await fetchData(page, searchQueryFromUrl, currentFilters);
     };
 
+
+    // Pobieranie danych na stronie
     const fetchData = async (page, searchQuery = "", currentFilters = filters) => {
         console.log("Fetching data with:", { page, searchQuery, currentFilters });
         try {
@@ -70,17 +106,22 @@ function JobOffersByCategory() {
                 response = await searchJobOffersByPosition(categoryId, page, searchQuery);
             } else if (Object.values(currentFilters).some(value => value && (Array.isArray(value) ? value.length : true))) {
                 response = await filtrateJobOffers(categoryId, page, currentFilters);
-                console.log("Filtrate: ", response, "Current page: ", page);
             } else {
                 response = await fetchAllJobOffers(categoryId, page);
             }
 
-            setJobOffers(response.jobOffers);
-            setTotalPages(response.totalPages);
-            console.log("Setting current page to:", page);
-            setCurrentPage(page);
-            scrollToTop();
-            setShowAlert(false);
+            if (response.jobOffers.length === 0) {
+                setShowAlert(true);
+                setJobOffers([]);
+                setTotalPages(0);
+            } else {
+                setJobOffers(response.jobOffers);
+                setTotalPages(response.totalPages);
+                console.log("Setting current page to:", page);
+                setCurrentPage(page);
+                scrollToTop();
+                setShowAlert(false);
+            }
         } catch (error) {
             console.error("Error fetching data:", error.message);
             setShowAlert(true);
@@ -89,14 +130,12 @@ function JobOffersByCategory() {
         }
     };
 
+    // Aktualizacja URL
     const updateUrl = (page, searchQuery = "", currentFilters = filters) => {
         const params = new URLSearchParams();
-        console.log("Updating URL with:", { page, searchQuery, currentFilters });
-
         if (searchQuery) {
             params.set('search', searchQuery);
         }
-
         Object.entries(currentFilters).forEach(([key, value]) => {
             if (Array.isArray(value)) {
                 value.filter(v => v).forEach(v => params.append(key, v));
@@ -104,24 +143,71 @@ function JobOffersByCategory() {
                 params.set(key, value);
             }
         });
-
         if (page !== 1) {
             params.set('page', page);
         }
-
         const finalUrl = `/oferty/kategoria/${categoryId}/?${params.toString()}`;
         console.log("Final URL:", finalUrl);
 
         navigate(finalUrl, { replace: true });
     };
 
+    // Obsługa zmiany strony
+    const handleChangePage = (newPage) => {
+        setCurrentPage(newPage);
+        updateUrl(newPage, searchQuery, filters);
+        fetchData(newPage, searchQuery, filters);
+    };
 
+    // Szukanie ofert za pomocą stanowiska
+    const handleSearchSubmit = async (event) => {
+        event.preventDefault();
+        setSearchQuery(query);
+        updateUrl(1, query, filters);
+        await fetchData(1, query, filters);
+    };
+
+    // Czyszczenie pola szukania ofert za pomocą stanowiska
+    const clearSearch = () => {
+        setQuery("");
+        if (searchQuery) {
+            setSearchQuery("");
+            const newFilters = {
+                selectedDate: null,
+                selectedJobTime: [],
+                selectedJobModel: [],
+                selectedJobType: [],
+                selectedSalaryType: null,
+                selectedSalaryRange: null,
+            };
+            setFilters(newFilters);
+            setAppliedFilters(newFilters);
+            updateUrl(1, "", newFilters);
+            fetchData(1, "", newFilters);
+        } else {
+            setQuery("");
+        }
+    };
+
+    // Filtrowanie ofert 
+    const handleFilterSubmit = async (e) => {
+        e.preventDefault();
+        console.log("Before submitting filters:", { currentPage: 1, searchQuery, filters });
+        setAppliedFilters(filters);
+        console.log("After submitting filters - before update and fetch:", { currentPage: 1, searchQuery, filters });
+        updateUrl(1, searchQuery, filters);
+        await fetchData(1, searchQuery, filters);
+        console.log("After fetchData:", { currentPage: 1, searchQuery, filters, appliedFilters });
+    };
+
+    // Obsługa wybrania filtrów
     const handleFilterChange = (filterType, value) => {
         const newFilters = { ...filters, [filterType]: value };
         setFilters(newFilters);
     };
 
-    const clearFilters = () => {
+    // Czyszczenie wszsytkich filtrów
+    const clearAllFilters = () => {
         const newFilters = {
             selectedDate: null,
             selectedJobTime: [],
@@ -136,119 +222,55 @@ function JobOffersByCategory() {
         fetchData(currentPage, searchQuery, newFilters);
     };
 
-    const handleSearchSubmit = async (event) => {
-        event.preventDefault();
-        setSearchQuery(query);
-        updateUrl(1, query, filters);
-        await fetchData(1, query, filters);
-    };
-
-    const handleChangePage = (newPage) => {
-        setCurrentPage(newPage);
-        updateUrl(newPage, searchQuery, filters);
-        fetchData(newPage, searchQuery, filters);
-    };
-
-    const clearSearch = () => {
-        setQuery("");
-        setSearchQuery("");
-        const newFilters = {
-            selectedDate: null,
-            selectedJobTime: [],
-            selectedJobModel: [],
-            selectedJobType: [],
-            selectedSalaryType: null,
-            selectedSalaryRange: null,
-        };
-        setFilters(newFilters);
-        updateUrl(1, "", newFilters);
-        fetchData(1, "", newFilters);
-    };
-
-
-    const submitFilters = async (e) => {
-        e.preventDefault();
-        console.log("Submitting filters with:", { currentPage: 1, searchQuery, filters });
-        setAppliedFilters(filters);
-        updateUrl(1, searchQuery, filters);
-        await fetchData(1, searchQuery, filters);
-    }
-
-
-
-
+    // Usuwanie pojedynczych filtrów
     const removeFilter = (filterType, valueToRemove) => {
-        console.log(`Removing filter: ${filterType} with value ${valueToRemove}`); // Dodanie logowania
         setFilters(prevFilters => {
             const updatedFilters = { ...prevFilters };
             if (Array.isArray(updatedFilters[filterType])) {
                 updatedFilters[filterType] = updatedFilters[filterType].filter(value => value !== valueToRemove);
             } else {
-                updatedFilters[filterType] = null; // Dla filtrów niebędących tablicami, resetujemy wartość
+                updatedFilters[filterType] = null;
             }
+
             return updatedFilters;
         });
-        // Aktualizacja URL i ponowne pobranie danych po usunięciu filtra
-        updateUrl(currentPage, searchQuery, filters);
-        fetchData(currentPage, searchQuery, filters);
+
+        setAppliedFilters(prevAppliedFilters => {
+            const updatedAppliedFilters = { ...prevAppliedFilters };
+            if (Array.isArray(updatedAppliedFilters[filterType])) {
+                updatedAppliedFilters[filterType] = updatedAppliedFilters[filterType].filter(value => value !== valueToRemove);
+            } else {
+                updatedAppliedFilters[filterType] = null;
+            }
+            return updatedAppliedFilters;
+        });
+
+        const newFilters = { ...filters };
+        if (Array.isArray(newFilters[filterType])) {
+            newFilters[filterType] = newFilters[filterType].filter(value => value !== valueToRemove);
+        } else {
+            newFilters[filterType] = null;
+        }
+
+        updateUrl(currentPage, searchQuery, newFilters);
+        fetchData(currentPage, searchQuery, newFilters);
     };
 
-
-    // const removeFilter = (filterType, valueToRemove) => {
-    //     setFilters(prevFilters => {
-    //         const filterValues = Array.isArray(prevFilters[filterType]) ? prevFilters[filterType] : [];
-    //         const newFilterValues = filterValues.filter(value => value !== valueToRemove);
-    //         const newFilters = {
-    //             ...prevFilters,
-    //             [filterType]: newFilterValues
-    //         };
-
-    //         const filtersLeft = Object.values(newFilters).some(
-    //             value => Array.isArray(value) ? value.length > 0 : value
-    //         );
-
-    //         if (!filtersLeft) {
-    //             clearAllFilters();
-    //         } else {
-    //             setFiltersApplied(filtersLeft);
-    //             updateUrlWithFilters(1, newFilters);
-    //             fetchData(1, newFilters);
-    //         }
-
-    //         return newFilters;
-    //     });
-    // };
-
-    // const handleFilterChange = (filterType, value) => {
-    //     setFilters(prevFilters => {
-    //         if (['selectedJobTime', 'selectedJobModel', 'selectedJobType'].includes(filterType)) {
-    //             const isSelected = prevFilters[filterType].includes(value);
-    //             return {
-    //                 ...prevFilters,
-    //                 [filterType]: isSelected
-    //                     ? prevFilters[filterType].filter(type => type !== value)
-    //                     : [...prevFilters[filterType], value],
-    //             };
-    //         }
-    //         else {
-    //             return {
-    //                 ...prevFilters,
-    //                 [filterType]: value,
-    //             };
-    //         }
-    //     });
-    // };
-
+    // Sprawdzenie czy są wybrane jakieś filtry
     const areAnyFiltersApplied = () => {
-        return Object.entries(appliedFilters).some(([key, value]) => {
+        const isAnyFilterApplied = Object.entries(appliedFilters).some(([key, value]) => {
             if (Array.isArray(value)) {
-                return value.length > 0;
+                const isArrayNotEmpty = value.length > 0;
+                return isArrayNotEmpty;
             } else {
-                return value && value !== 'any';
+                const isValueNotNull = value !== null && value !== 'any';
+                return isValueNotNull;
             }
         });
+        return isAnyFilterApplied;
     };
 
+    // Obsługa typu zarobków
     const handleSalaryTypeChange = (salaryType) => {
         setFilters(prevFilters => {
             const newFilters = {
@@ -260,6 +282,7 @@ function JobOffersByCategory() {
         });
     };
 
+    // Obsługa zakresu zarobków
     const handleSalaryRangeChange = (range) => {
         let sanitizedRange;
         if (range.includes('Mniejsze niż')) {
@@ -276,18 +299,6 @@ function JobOffersByCategory() {
         });
     };
 
-    const findSalaryLabel = (salaryType, salaryValue) => {
-        const rangeKey = salaryType + '_range';
-        const ranges = salaryRange[rangeKey];
-        if (!ranges) return salaryValue;
-        if (salaryValue.startsWith('<')) {
-            return ranges[0];
-        } else if (salaryValue.startsWith('>')) {
-            return ranges[ranges.length - 1];
-        }
-        return ranges.find(range => range.includes(salaryValue)) || salaryValue;
-    };
-
     return (
         <Container className='mt-2'>
             {showAlert && (
@@ -301,30 +312,19 @@ function JobOffersByCategory() {
                     {areAnyFiltersApplied() && (
                         <div className="active-filters">
                             <h5>Aktywne filtry</h5>
-                            {Object.entries(filters).map(([key, values]) => (
-                                Array.isArray(values) && values.length > 0 ?
-                                    values.map(value => (
+                            {
+                                Object.entries(appliedFilters).map(([key, value]) => {
+                                    if (Array.isArray(value) && value.length === 0) return null;
+                                    if (value === null) return null;
+                                    return (
                                         <div key={`${key}-${value}`} className="active-filter-badge">
                                             <strong>{filterCategories[key]}:</strong> {filtersCombined[value] || value}
                                             <button onClick={() => removeFilter(key, value)}>×</button>
                                         </div>
-                                    )) : null
-                            ))}
-
-                            {filters.selectedDate && filters.selectedDate !== dateFilters.all && (
-                                <div className="active-filter-badge">
-                                    <strong>{filterCategories.selectedDateFilter}:</strong> {filtersCombined[filters.selectedDate]}
-                                    <button onClick={() => removeFilter('selectedDate', filters.selectedDate)}>×</button>
-                                </div>
-                            )}
-
-                            {filters.selectedSalaryType && filters.selectedSalaryType !== "any" && filters.selectedSalaryRange && filters.selectedSalaryRange !== "any" && (
-                                <div className="active-filter-badge">
-                                    <strong>Zarobki w zakresie:</strong> {salaryTypes[filters.selectedSalaryType]} {findSalaryLabel(filters.selectedSalaryType, filters.selectedSalaryRange)}
-                                    <button onClick={() => handleSalaryRangeChange()}>×</button>
-                                </div>
-                            )}
-                            <Button onClick={clearFilters} variant="secondary">Wyczyść filtry</Button>
+                                    );
+                                })
+                            }
+                            <Button onClick={clearAllFilters} variant="secondary">Wyczyść filtry</Button>
                         </div>
                     )}
                     <ElementFilter
@@ -372,7 +372,7 @@ function JobOffersByCategory() {
                         selectedFilters={filters.selectedJobTime}
                         onFilterChange={(value) => handleFilterChange('selectedJobTime', value)}
                     />
-                    <Button onClick={submitFilters} variant="primary">Szukaj oferty</Button>
+                    <Button onClick={handleFilterSubmit} variant="primary">Szukaj oferty</Button>
                 </Col>
                 <Col sm={8}>
                     <InputGroup className="mb-3" as="form" onSubmit={handleSearchSubmit}>

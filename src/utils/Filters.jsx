@@ -40,10 +40,12 @@ const salaryRange = {
 };
 
 const filterCategories = {
-    selectedDateFilter: 'Data dodania',
-    selectedWorkingHourTypes: 'Wymiar pracy',
-    selectedJobModel: 'Tryb pracy',
+    selectedDate: 'Data dodania',
+    selectedJobTime: 'Czas pracy',
+    selectedJobModel: 'Model pracy',
     selectedJobType: 'Typ pracy',
+    selectedSalaryType: "Typ wynagodrodzenia",
+    selectedSalaryRange: "Zakres zarobków"
 };
 
 const filtersCombined = {
