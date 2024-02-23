@@ -1,149 +1,62 @@
 import axios from 'axios';
-import { dateFilters } from '../../utils/Filters';
+// Import odpowiednich filtrów i konfiguracji
 
 const fetchAllJobOffers = async (categoryId, page) => {
     try {
-        const response = await axios.get(`http://localhost:8000/api/oferty/kategoria/${categoryId}/`, {
-            params: { page }
-        });
-        const jobOffers = response.data && Array.isArray(response.data.results) ? response.data.results : [];
-        const totalItems = response.data.count || 0;
-        const pageSize = 10;
-        const totalPages = Math.ceil(totalItems / pageSize);
-
-        return {
-            jobOffers,
-            totalPages,
-            currentPage: page,
-        };
+        const response = await axios.get(`http://localhost:8000/api/oferty/kategoria/${categoryId}/`, { params: { page } });
+        return handleResponse(response);
     } catch (error) {
-        console.error("Error fetching all job offers", error);
-        return { jobOffers: [], totalPages: 0, currentPage: page };
+        return handleError(error);
     }
 };
 
 const searchJobOffersByPosition = async (categoryId, page, searchQuery) => {
     try {
-        console.log("Wpisana fraza: ", searchQuery);
-        const response = await axios.get(`http://localhost:8000/api/oferty/kategoria/${categoryId}/search/`, {
-            params: { page, search: searchQuery }
-        });
-        console.log("Szukaj query: ", response);
-        const jobOffers = response.data && Array.isArray(response.data.results) ? response.data.results : [];
-        const totalItems = response.data.count || 0;
-        const pageSize = 10;
-        const totalPages = Math.ceil(totalItems / pageSize);
-
-        return {
-            jobOffers,
-            totalPages,
-            currentPage: page,
-        };
+        const response = await axios.get(`http://localhost:8000/api/oferty/kategoria/${categoryId}/search/`, { params: { page, search: searchQuery } });
+        return handleResponse(response);
     } catch (error) {
-        console.error("Error searching job offers by position", error);
-        return { jobOffers: [], totalPages: 0, currentPage: page };
-    }
-};
-
-const filtrateOffersByDate = async (categoryId, page, dateFilter) => {
-
-    const params = new URLSearchParams({ page });
-    if (dateFilter) {
-        params.append('dateRange', dateFilter);
-    }
-
-    try {
-        const response = await axios.get(`http://localhost:8000/api/oferty/kategoria/${categoryId}/?${params.toString()}`)
-        console.log("Date filter query: ", response);
-        const jobOffers = response.data && Array.isArray(response.data.results) ? response.data.results : [];
-        const totalItems = response.data.count || 0;
-        const pageSize = 10;
-        const totalPages = Math.ceil(totalItems / pageSize);
-        console.log("Fetch date:", response);
-        return {
-            jobOffers,
-            totalPages,
-            currentPage: page,
-        };
-
-    } catch (error) {
-        console.error("Error fetching job offers and category name", error);
-        return { jobOffers: [], totalPages: 0, currentPage: page };
-    }
-};
-
-const filtrateOffersByWorkingHours = async (categoryId, page, WorkingHourTypes) => {
-
-    const params = new URLSearchParams({ page });
-
-    if (Array.isArray(WorkingHourTypes)) {
-        WorkingHourTypes.forEach(type => params.append('WorkingHourTypes', type));
-    }
-
-    try {
-        const response = await axios.get(`http://localhost:8000/api/oferty/filtrowane/${categoryId}/`, { params });
-        console.log("Czas pracy filter query: ", response);
-        const jobOffers = response.data && Array.isArray(response.data.results) ? response.data.results : [];
-        const totalItems = response.data.count || 0;
-        const pageSize = 10;
-        const totalPages = Math.ceil(totalItems / pageSize);
-
-        return {
-            jobOffers,
-            totalPages,
-            currentPage: page,
-        };
-    } catch (error) {
-        console.error("Error fetching job offers with employment type filtering", error);
-        return { jobOffers: [], totalPages: 0, currentPage: page };
+        return handleError(error);
     }
 };
 
 const filtrateJobOffers = async (categoryId, page, filters) => {
-
-    const { selectedDate, selectedJobType, selectedJobModel, selectedJobTime, selectedSalaryType,
-        selectedSalaryRange } = filters;
-    const params = new URLSearchParams({ page });
-
-    if (selectedDate && selectedDate !== dateFilters.all) {
-        params.append('dateRange', selectedDate);
-    }
-
-    selectedJobTime.forEach(type => params.append('workingHourTypes', type));
-    selectedJobModel.forEach(type => params.append('jobModels', type));
-    selectedJobType.forEach(type => params.append('jobType', type));
-
-    if (selectedSalaryType && selectedSalaryRange && selectedSalaryRange !== 'any') {
-        params.append('salaryType', selectedSalaryType);
-        params.append('salaryRange', selectedSalaryRange);
-    }
-
     try {
-        console.log(params.toString());
-
+        const params = createFilterParams(filters, page);
         const response = await axios.get(`http://localhost:8000/api/oferty/filtrowane/${categoryId}/`, { params });
-
-
-        const jobOffers = response.data && Array.isArray(response.data.results) ? response.data.results : [];
-        const totalItems = response.data.count || 0;
-        const pageSize = 10;
-        const totalPages = Math.ceil(totalItems / pageSize);
-
-        return {
-            jobOffers,
-            totalPages,
-            currentPage: page,
-        };
+        return handleResponse(response);
     } catch (error) {
-        if (error.response && error.response.status === 404) {
-            console.error("Endpoint not found or invalid parameters", error.response);
-        } else {
-            console.error("Error fetching filtered job offers", error);
-        }
-        // Możesz tutaj zdecydować, co zrobić w przypadku błędu.
+        return handleError(error);
     }
 };
 
+// Pomocnicze funkcje do obsługi odpowiedzi i błędów
+const handleResponse = (response) => {
+    const jobOffers = response.data.results || [];
+    const totalItems = response.data.count || 0;
+    const pageSize = 10;
+    const totalPages = Math.ceil(totalItems / pageSize);
+    return { jobOffers, totalPages, currentPage: parseInt(response.config.params.page) };
+};
 
+const handleError = (error) => {
+    console.error("Error fetching data", error);
+    return { jobOffers: [], totalPages: 0, currentPage: 0 };
+};
 
-export { fetchAllJobOffers, searchJobOffersByPosition, filtrateOffersByDate, filtrateOffersByWorkingHours, filtrateJobOffers };
+const createFilterParams = (filters, page) => {
+    const params = new URLSearchParams({ page });
+
+    Object.entries(filters).forEach(([key, value]) => {
+        if (Array.isArray(value)) {
+            value.forEach(singleValue => {
+                if (singleValue) params.append(key, singleValue);
+            });
+        } else if (value) {
+            params.set(key, value);
+        }
+    });
+
+    return params;
+};
+
+export { fetchAllJobOffers, searchJobOffersByPosition, filtrateJobOffers };

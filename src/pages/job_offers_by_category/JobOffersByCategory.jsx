@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Container, Row, Col } from 'react-bootstrap';
-import FormControl from 'react-bootstrap/FormControl';
-import InputGroup from 'react-bootstrap/InputGroup';
-import Button from 'react-bootstrap/Button';
-import Alert from 'react-bootstrap/Alert';
+import { Container, Row, Col, Form, FormControl, InputGroup, Button, Alert } from 'react-bootstrap';
 import { fetchAllJobOffers, searchJobOffersByPosition, filtrateJobOffers } from '../../services/api/jobOffersService';
 import CustomPagination from '../../components/pagination/CustomPagination';
 import JobCard from '../../components/job_card/JobCard';
 import { scrollToTop } from '../../utils/scrollToTop';
 import './joboffersbycategory.css';
-import Filters from '../../containers/Filters'
-
+import { dateFilters, jobModelFilters, jobTypeFilters, jobTimeFilters, salaryTypes, salaryRange, filterCategories, filtersCombined } from '../../utils/Filters';
+import ObjectFilter from '../../components/filters/ObjectFilter';
+import ElementFilter from '../../components/filters/ElementFilter';
+import SalaryTypeFilter from '../../components/filters/salary_type_filter/SalaryTypeFilter';
 
 function JobOffersByCategory() {
     const location = useLocation();
@@ -23,12 +21,6 @@ function JobOffersByCategory() {
     const [searchQuery, setSearchQuery] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
-
-
-    const [selectedSalaryType, setSelectedSalaryType] = useState();
-    const [selectedSalaryRange, setSelectedSalaryRange] = useState();
-    const [filtersApplied, setFiltersApplied] = useState();
-
     const [filters, setFilters] = useState({
         selectedDate: null,
         selectedJobTime: [],
@@ -37,150 +29,259 @@ function JobOffersByCategory() {
         selectedSalaryType: null,
         selectedSalaryRange: null,
     });
+    const [appliedFilters, setAppliedFilters] = useState({
+        selectedDate: null,
+        selectedJobTime: [],
+        selectedJobModel: [],
+        selectedJobType: [],
+        selectedSalaryType: null,
+        selectedSalaryRange: null,
+    });
 
-    // Pobieranie danych
-    const fetchData = async (page) => {
-        console.log(`Fetching data for category: ${categoryId}, page: ${page}`);
+    useEffect(() => {
+        fetchDataFromUrl();
+    }, [location.search, categoryId]);
 
+    const fetchDataFromUrl = async () => {
+
+        const params = new URLSearchParams(location.search);
+        const page = parseInt(params.get('page'), 10) || 1;
+        const searchQueryFromUrl = params.get('search') || "";
+        let currentFilters = {
+            selectedDate: params.get('selectedDate'),
+            selectedJobTime: params.getAll('selectedJobTime'),
+            selectedJobModel: params.getAll('selectedJobModel'),
+            selectedJobType: params.getAll('selectedJobType'),
+            selectedSalaryType: params.get('selectedSalaryType'),
+            selectedSalaryRange: params.get('selectedSalaryRange'),
+        };
+        setFilters(currentFilters);
+        setSearchQuery(searchQueryFromUrl);
+        setCurrentPage(page);
+        await fetchData(page, searchQueryFromUrl, currentFilters);
+    };
+
+    const fetchData = async (page, searchQuery = "", currentFilters = filters) => {
+        console.log("Fetching data with:", { page, searchQuery, currentFilters });
         let response;
         if (searchQuery) {
             response = await searchJobOffersByPosition(categoryId, page, searchQuery);
-            console.log(`searchJobOffersByPosition called with categoryId: ${categoryId}, page: ${page}, query: ${searchQuery}`);
-        } else if (Object.values(filters).some(filter => filter)) {
-            response = await filtrateJobOffers(categoryId, page, filters);
-            console.log(`filtrateJobOffers called with categoryId: ${categoryId}, page: ${page}, filters:`, filters);
+        } else if (Object.values(currentFilters).some(value => value && (Array.isArray(value) ? value.length : true))) {
+            response = await filtrateJobOffers(categoryId, page, currentFilters);
+            console.log("Filtrate: ", response, "Current page: ", page);
         } else {
             response = await fetchAllJobOffers(categoryId, page);
-            console.log(`fetchAllJobOffers called with categoryId: ${categoryId}, page: ${page}`);
         }
 
         if (response) {
             setJobOffers(response.jobOffers);
             setTotalPages(response.totalPages);
+            console.log("Setting current page to:", page);
             setCurrentPage(page);
-            console.log("Offers fetched successfully.");
-        } else {
-            console.log("Failed to fetch offers.");
-        }
-    };
-
-    // Pobieranie wszystkich ofert
-    const fetchInitialJobOffers = async () => {
-        console.log("Fetching initial job offers");
-        const response = await fetchAllJobOffers(categoryId, 1);
-        if (response) {
-            setJobOffers(response.jobOffers);
-            setTotalPages(response.totalPages);
-            setCurrentPage(1);
             scrollToTop();
         } else {
-            console.log("No response or error in fetchInitialJobOffers");
-        }
-    };
-
-    // Logika przejścia do kolejnej strony
-    useEffect(() => {
-        const page = new URLSearchParams(location.search).get('page') || 1;
-        fetchData(page);
-    }, [location.search, categoryId, filters]);
-
-    // Zmiana strony bez stosowania kryteriów wyszukiwania
-    const handleChangePage = (newPage) => {
-        console.log(`Page change requested to ${newPage}`);
-        const searchParams = new URLSearchParams(location.search);
-        searchParams.set('page', newPage);
-        console.log(`Navigating to page ${newPage} with filters: ${searchParams.toString()}`);
-        navigate(`/oferty/kategoria/${categoryId}/?${searchParams.toString()}`);
-    };
-
-    // Zmiana strony z uwzględnieniem kryteriów wyszukiwania
-    const handleSearchPageChange = (newPage) => {
-        console.log(`Page change requested to ${newPage} with query: ${searchQuery}`);
-        fetchData(newPage);
-    };
-
-    // Wyszukiwanie ofert po stanowisku
-    const onSubmitSearch = async (e) => {
-        e.preventDefault();
-        console.log(`Submitting search for ${query}`);
-        const response = await searchJobOffersByPosition(categoryId, 1, query);
-        console.log("Response from searchJobOffersByPosition:", response);
-
-        if (response.jobOffers.length === 0) {
-            console.log("No job offers found for the search");
             setShowAlert(true);
-            setTimeout(() => {
-                setShowAlert(false);
-                setQuery("");
-                setSearchQuery("");
-                fetchInitialJobOffers();
-            }, 5000);
-        } else {
-            setSearchQuery(query);
-            setJobOffers(response.jobOffers);
-            setTotalPages(response.totalPages);
-            setCurrentPage(1);
-            scrollToTop();
+            setTimeout(() => setShowAlert(false), 5000);
         }
     };
 
-    // Obsługa kasowania zawartości pola query i searchquery
-    const clearSearch = () => {
-        console.log("Clearing search");
+    const updateUrl = (page, searchQuery = "", currentFilters = filters) => {
+        const params = new URLSearchParams();
+        console.log("Updating URL with:", { page, searchQuery, currentFilters });
+
         if (searchQuery) {
-            fetchInitialJobOffers();
-        }
-        setQuery("");
-        setSearchQuery("");
-        scrollToTop();
-    };
-
-    // Filtrowanie ofert
-    const submitFilters = async (e) => {
-        e.preventDefault();
-
-        if (selectedSalaryType === 'any' || selectedSalaryRange === 'any') {
-            alert('Proszę wybrać zarówno typ wynagrodzenia, jak i zakres wynagrodzenia.');
-            return;
+            params.set('search', searchQuery);
         }
 
-        const response = await filtrateJobOffers(categoryId, 1, filters);
+        Object.entries(currentFilters).forEach(([key, value]) => {
+            if (Array.isArray(value)) {
+                value.filter(v => v).forEach(v => params.append(key, v));
+            } else if (value && value !== null && value !== 'any' && value.trim() !== '') {
+                params.set(key, value);
+            }
+        });
 
-        if (response.jobOffers.length === 0) {
-            console.log("No job offers found. Showing alert.");
-            scrollToTop();
-            setShowAlert(true);
-            setTimeout(() => {
-                setShowAlert(false);
-                fetchInitialJobOffers();
-            }, 5000);
-        } else {
-            setFiltersApplied(true);
-            setJobOffers(response.jobOffers);
-            setTotalPages(response.totalPages);
-            setCurrentPage(1);
-            scrollToTop();
-            setShowAlert(false);
+        if (page !== 1) {
+            params.set('page', page);
         }
+
+        const finalUrl = `/oferty/kategoria/${categoryId}/?${params.toString()}`;
+        console.log("Final URL:", finalUrl);
+
+        navigate(finalUrl, { replace: true });
     };
 
 
-    const clearAllFilters = async () => {
-        const response = await filtrateJobOffers(categoryId, 1, filters);
-        console.log("Clearing all filters.");
-        setFilters({
+    const handleFilterChange = (filterType, value) => {
+        const newFilters = { ...filters, [filterType]: value };
+        setFilters(newFilters);
+    };
+
+    const clearFilters = () => {
+        const newFilters = {
             selectedDate: null,
             selectedJobTime: [],
             selectedJobModel: [],
             selectedJobType: [],
             selectedSalaryType: null,
             selectedSalaryRange: null,
+        };
+        setFilters(newFilters);
+        setAppliedFilters(newFilters);
+        updateUrl(currentPage, searchQuery, newFilters);
+        fetchData(currentPage, searchQuery, newFilters);
+    };
+
+    const handleSearchSubmit = async (event) => {
+        event.preventDefault();
+        setSearchQuery(query);
+        updateUrl(1, query, filters);
+        await fetchData(1, query, filters);
+    };
+
+    const handleChangePage = (newPage) => {
+        setCurrentPage(newPage);
+        updateUrl(newPage, searchQuery, filters);
+        fetchData(newPage, searchQuery, filters);
+    };
+
+    const clearSearch = () => {
+        setQuery("");
+        setSearchQuery("");
+        const newFilters = {
+            selectedDate: null,
+            selectedJobTime: [],
+            selectedJobModel: [],
+            selectedJobType: [],
+            selectedSalaryType: null,
+            selectedSalaryRange: null,
+        };
+        setFilters(newFilters);
+        updateUrl(1, "", newFilters);
+        fetchData(1, "", newFilters);
+    };
+
+
+    const submitFilters = async (e) => {
+        e.preventDefault();
+        console.log("Submitting filters with:", { currentPage: 1, searchQuery, filters });
+        setAppliedFilters(filters);
+        updateUrl(1, searchQuery, filters);
+        await fetchData(1, searchQuery, filters);
+    }
+
+
+
+
+    const removeFilter = (filterType, valueToRemove) => {
+        console.log(`Removing filter: ${filterType} with value ${valueToRemove}`); // Dodanie logowania
+        setFilters(prevFilters => {
+            const updatedFilters = { ...prevFilters };
+            if (Array.isArray(updatedFilters[filterType])) {
+                updatedFilters[filterType] = updatedFilters[filterType].filter(value => value !== valueToRemove);
+            } else {
+                updatedFilters[filterType] = null; // Dla filtrów niebędących tablicami, resetujemy wartość
+            }
+            return updatedFilters;
         });
-        setFiltersApplied(false);
-        setCurrentPage(1);
-        navigate(`/oferty/kategoria/${categoryId}/?page=1`);
-        fetchData();
-        console.log("All filters cleared.");
+        // Aktualizacja URL i ponowne pobranie danych po usunięciu filtra
+        updateUrl(currentPage, searchQuery, filters);
+        fetchData(currentPage, searchQuery, filters);
+    };
+
+
+    // const removeFilter = (filterType, valueToRemove) => {
+    //     setFilters(prevFilters => {
+    //         const filterValues = Array.isArray(prevFilters[filterType]) ? prevFilters[filterType] : [];
+    //         const newFilterValues = filterValues.filter(value => value !== valueToRemove);
+    //         const newFilters = {
+    //             ...prevFilters,
+    //             [filterType]: newFilterValues
+    //         };
+
+    //         const filtersLeft = Object.values(newFilters).some(
+    //             value => Array.isArray(value) ? value.length > 0 : value
+    //         );
+
+    //         if (!filtersLeft) {
+    //             clearAllFilters();
+    //         } else {
+    //             setFiltersApplied(filtersLeft);
+    //             updateUrlWithFilters(1, newFilters);
+    //             fetchData(1, newFilters);
+    //         }
+
+    //         return newFilters;
+    //     });
+    // };
+
+    // const handleFilterChange = (filterType, value) => {
+    //     setFilters(prevFilters => {
+    //         if (['selectedJobTime', 'selectedJobModel', 'selectedJobType'].includes(filterType)) {
+    //             const isSelected = prevFilters[filterType].includes(value);
+    //             return {
+    //                 ...prevFilters,
+    //                 [filterType]: isSelected
+    //                     ? prevFilters[filterType].filter(type => type !== value)
+    //                     : [...prevFilters[filterType], value],
+    //             };
+    //         }
+    //         else {
+    //             return {
+    //                 ...prevFilters,
+    //                 [filterType]: value,
+    //             };
+    //         }
+    //     });
+    // };
+
+    const areAnyFiltersApplied = () => {
+        return Object.entries(appliedFilters).some(([key, value]) => {
+            if (Array.isArray(value)) {
+                return value.length > 0;
+            } else {
+                return value && value !== 'any';
+            }
+        });
+    };
+
+    const handleSalaryTypeChange = (salaryType) => {
+        setFilters(prevFilters => {
+            const newFilters = {
+                ...prevFilters,
+                selectedSalaryType: salaryType,
+                selectedSalaryRange: null
+            };
+            return newFilters;
+        });
+    };
+
+    const handleSalaryRangeChange = (range) => {
+        let sanitizedRange;
+        if (range.includes('Mniejsze niż')) {
+            sanitizedRange = '<' + range.replace('Mniejsze niż', '').replace('zł', '').trim();
+        } else if (range.includes('Większe niż')) {
+            sanitizedRange = '>' + range.replace('Większe niż', '').replace('zł', '').trim();
+        } else {
+            sanitizedRange = range.replace('zł', '').trim();
+        }
+
+        setFilters(prevFilters => {
+            const newFilters = { ...prevFilters, selectedSalaryRange: sanitizedRange };
+            return newFilters;
+        });
+    };
+
+    const findSalaryLabel = (salaryType, salaryValue) => {
+        const rangeKey = salaryType + '_range';
+        const ranges = salaryRange[rangeKey];
+        if (!ranges) return salaryValue;
+        if (salaryValue.startsWith('<')) {
+            return ranges[0];
+        } else if (salaryValue.startsWith('>')) {
+            return ranges[ranges.length - 1];
+        }
+        return ranges.find(range => range.includes(salaryValue)) || salaryValue;
     };
 
     return (
@@ -193,20 +294,84 @@ function JobOffersByCategory() {
             <h2>{searchQuery ? `Szukane stanowisko: ${searchQuery}` : "Wszystkie oferty"}</h2>
             <Row className='mt-5'>
                 <Col sm={4} className="filter-column">
-                    <Filters
-                        filters={filters}
-                        setFilters={setFilters}
-                        selectedSalaryType={selectedSalaryType}
-                        setSelectedSalaryType={setSelectedSalaryType}
-                        selectedSalaryRange={selectedSalaryRange}
-                        setSelectedSalaryRange={setSelectedSalaryRange}
-                        submitFilters={submitFilters}
-                        clearAllFilters={clearAllFilters}
-                        filtersApplied={filtersApplied}
+                    {areAnyFiltersApplied() && (
+                        <div className="active-filters">
+                            <h5>Aktywne filtry</h5>
+                            {Object.entries(filters).map(([key, values]) => (
+                                Array.isArray(values) && values.length > 0 ?
+                                    values.map(value => (
+                                        <div key={`${key}-${value}`} className="active-filter-badge">
+                                            <strong>{filterCategories[key]}:</strong> {filtersCombined[value] || value}
+                                            <button onClick={() => removeFilter(key, value)}>×</button>
+                                        </div>
+                                    )) : null
+                            ))}
+
+                            {filters.selectedDate && filters.selectedDate !== dateFilters.all && (
+                                <div className="active-filter-badge">
+                                    <strong>{filterCategories.selectedDateFilter}:</strong> {filtersCombined[filters.selectedDate]}
+                                    <button onClick={() => removeFilter('selectedDate', filters.selectedDate)}>×</button>
+                                </div>
+                            )}
+
+                            {filters.selectedSalaryType && filters.selectedSalaryType !== "any" && filters.selectedSalaryRange && filters.selectedSalaryRange !== "any" && (
+                                <div className="active-filter-badge">
+                                    <strong>Zarobki w zakresie:</strong> {salaryTypes[filters.selectedSalaryType]} {findSalaryLabel(filters.selectedSalaryType, filters.selectedSalaryRange)}
+                                    <button onClick={() => handleSalaryRangeChange()}>×</button>
+                                </div>
+                            )}
+                            <Button onClick={clearFilters} variant="secondary">Wyczyść filtry</Button>
+                        </div>
+                    )}
+                    <ElementFilter
+                        filterLabel="Data dodania"
+                        filterOptions={dateFilters}
+                        selectedFilters={filters.selectedDate}
+                        onFilterChange={(value) => handleFilterChange('selectedDate', value)}
                     />
+                    <SalaryTypeFilter
+                        filterLabel="Zarobki"
+                        filterOptions={salaryTypes}
+                        selectedFilters={filters.selectedSalaryType}
+                        onFilterChange={handleSalaryTypeChange}
+                    />
+                    {filters.selectedSalaryType && salaryRange[filters.selectedSalaryType + '_range'] && (
+                        <div className="salary-range-filters">
+                            {salaryRange[filters.selectedSalaryType + '_range'].map(range => (
+                                <Form.Check
+                                    key={range}
+                                    type="radio"
+                                    id={`salary-range-filter-${range}`}
+                                    name="salary-range-filter"
+                                    label={range}
+                                    checked={filters.selectedSalaryRange === range}
+                                    onChange={() => handleSalaryRangeChange(range)}
+                                />
+                            ))}
+                        </div>
+                    )}
+                    <ObjectFilter
+                        filterLabel="Model pracy"
+                        filterOptions={jobModelFilters}
+                        selectedFilters={filters.selectedJobModel}
+                        onFilterChange={(value) => handleFilterChange('selectedJobModel', value)}
+                    />
+                    <ObjectFilter
+                        filterLabel="Typ pracy"
+                        filterOptions={jobTypeFilters}
+                        selectedFilters={filters.selectedJobType}
+                        onFilterChange={(value) => handleFilterChange('selectedJobType', value)}
+                    />
+                    <ObjectFilter
+                        filterLabel="Czas pracy"
+                        filterOptions={jobTimeFilters}
+                        selectedFilters={filters.selectedJobTime}
+                        onFilterChange={(value) => handleFilterChange('selectedJobTime', value)}
+                    />
+                    <Button onClick={submitFilters} variant="primary">Szukaj oferty</Button>
                 </Col>
                 <Col sm={8}>
-                    <InputGroup className="mb-3" as="form" onSubmit={onSubmitSearch}>
+                    <InputGroup className="mb-3" as="form" onSubmit={handleSearchSubmit}>
                         <FormControl
                             placeholder="Szukaj oferty po stanowisku"
                             aria-label="Search"
@@ -229,7 +394,7 @@ function JobOffersByCategory() {
                         <CustomPagination
                             currentPage={currentPage}
                             totalPages={totalPages}
-                            onPageChange={searchQuery ? handleSearchPageChange : handleChangePage}
+                            onPageChange={handleChangePage}
                         />
                     </div>
                 </Col>
