@@ -146,6 +146,9 @@ function JobOffersByCategory() {
             if (Array.isArray(value)) {
                 value.filter(v => v).forEach(v => params.append(key, v));
             } else if (value && value !== null && value !== 'any' && value.trim() !== '') {
+                if (key === 'selectedSalaryType' && !currentFilters.selectedSalaryRange) {
+                    return;
+                }
                 params.set(key, value);
             }
         });
@@ -196,14 +199,19 @@ function JobOffersByCategory() {
     };
 
     // Filtrowanie ofert 
-    const handleFilterSubmit = async (e) => {
-        e.preventDefault();
-        console.log("Before submitting filters:", { currentPage: 1, searchQuery, filters });
-        setAppliedFilters(filters);
-        console.log("After submitting filters - before update and fetch:", { currentPage: 1, searchQuery, filters });
-        updateUrl(1, searchQuery, filters);
-        await fetchData(1, searchQuery, filters);
-        console.log("After fetchData:", { currentPage: 1, searchQuery, filters, appliedFilters });
+    const handleFilterSubmit = async (event) => {
+        event.preventDefault();
+
+        // Zaktualizuj stan zapytania tylko jeśli wszystkie wymagane filtry są ustawione
+        if (filters.selectedSalaryType && filters.selectedSalaryRange) {
+            setSearchQuery(query);
+            updateUrl(1, query, filters);
+            await fetchData(1, query, filters);
+        } else {
+            // Możesz wyświetlić komunikat w interfejsie użytkownika zamiast alertu
+            // Na przykład aktualizując stan, który kontroluje wyświetlanie komunikatu w komponencie
+            setShowAlert(true);
+        }
     };
 
     // Obsługa wybrania filtrów
@@ -231,20 +239,33 @@ function JobOffersByCategory() {
     // Sprawdzenie które filtry są do usunięcia
     const calculateNewFilters = (currentFilters, filterType, valueToRemove) => {
         const newFilters = { ...currentFilters };
+
         if (Array.isArray(newFilters[filterType])) {
             newFilters[filterType] = newFilters[filterType].filter(value => value === valueToRemove);
         } else {
             newFilters[filterType] = null;
         }
-
         return newFilters;
     };
 
     // Usuwanie pojedynczych filtrów
     const removeFilter = (filterType, valueToRemove) => {
-        const newFilters = calculateNewFilters(filters, filterType, valueToRemove);
+        let newFilters = { ...filters };
+
+        if (filterType === 'selectedSalaryType' || filterType === 'selectedSalaryRange') {
+            // Jeśli usuwany jest SalaryType lub SalaryRange, usuń oba filtry
+            newFilters.selectedSalaryType = null;
+            newFilters.selectedSalaryRange = null;
+        } else {
+            // Dla innych filtrów zachowaj oryginalną logikę usuwania
+            newFilters = calculateNewFilters(filters, filterType, valueToRemove);
+        }
+
+        // Aktualizuj stan filtrów i zastosowanych filtrów
         setFilters(newFilters);
         setAppliedFilters(newFilters);
+
+        // Aktualizuj URL i wykonaj żądanie z nowymi filtrami
         updateUrl(currentPage, searchQuery, newFilters);
         fetchData(currentPage, searchQuery, newFilters);
     };
