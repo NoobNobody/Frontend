@@ -253,19 +253,15 @@ function JobOffersByCategory() {
         let newFilters = { ...filters };
 
         if (filterType === 'selectedSalaryType' || filterType === 'selectedSalaryRange') {
-            // Jeśli usuwany jest SalaryType lub SalaryRange, usuń oba filtry
             newFilters.selectedSalaryType = null;
             newFilters.selectedSalaryRange = null;
         } else {
-            // Dla innych filtrów zachowaj oryginalną logikę usuwania
             newFilters = calculateNewFilters(filters, filterType, valueToRemove);
         }
 
-        // Aktualizuj stan filtrów i zastosowanych filtrów
         setFilters(newFilters);
         setAppliedFilters(newFilters);
 
-        // Aktualizuj URL i wykonaj żądanie z nowymi filtrami
         updateUrl(currentPage, searchQuery, newFilters);
         fetchData(currentPage, searchQuery, newFilters);
     };
