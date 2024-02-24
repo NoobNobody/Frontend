@@ -228,35 +228,26 @@ function JobOffersByCategory() {
         fetchData(currentPage, searchQuery, newFilters);
     };
 
+    // Sprawdzenie które filtry są do usunięcia
     const calculateNewFilters = (currentFilters, filterType, valueToRemove) => {
-        const newFilters = { ...currentFilters }; // Tworzenie kopii obiektu filtrów
-
-        // Sprawdzanie typu filtra i odpowiednie jego aktualizowanie
+        const newFilters = { ...currentFilters };
         if (Array.isArray(newFilters[filterType])) {
-            // Jeśli filtr jest tablicą, usuwamy z niej wartość
             newFilters[filterType] = newFilters[filterType].filter(value => value === valueToRemove);
         } else {
-            // Jeśli filtr nie jest tablicą, ustawiamy go na null (lub inną domyślną wartość)
             newFilters[filterType] = null;
         }
 
         return newFilters;
     };
 
+    // Usuwanie pojedynczych filtrów
     const removeFilter = (filterType, valueToRemove) => {
-        // Oblicz nowe filtry bez usuwanego filtra
         const newFilters = calculateNewFilters(filters, filterType, valueToRemove);
-
-        // Bezpośrednio aktualizuj stan za pomocą nowych filtrów
         setFilters(newFilters);
         setAppliedFilters(newFilters);
-
-        // Bezpośrednio przekazuj nowe filtry do funkcji updateUrl i fetchData
         updateUrl(currentPage, searchQuery, newFilters);
         fetchData(currentPage, searchQuery, newFilters);
     };
-
-
 
     // Sprawdzenie czy są wybrane jakieś filtry
     const areAnyFiltersApplied = () => {
