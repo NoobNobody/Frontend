@@ -47,6 +47,7 @@ function JobOffersByCategory() {
         const params = new URLSearchParams(location.search);
         const page = parseInt(params.get('page'), 10) || 1;
         const searchQueryFromUrl = params.get('search') || "";
+
         let isValid = true;
 
         let currentFilters = {
@@ -68,19 +69,22 @@ function JobOffersByCategory() {
             }
         });
 
-        // Sprawdź poprawność selectedSalaryType
         if (currentFilters.selectedSalaryType && !salaryTypes[currentFilters.selectedSalaryType]) {
             isValid = false;
         }
 
         if (currentFilters.selectedSalaryRange && currentFilters.selectedSalaryType) {
             const ranges = salaryRange[currentFilters.selectedSalaryType + '_range'];
-            if (!ranges.includes(currentFilters.selectedSalaryRange)) {
+            const formattedSelectedRange = `${currentFilters.selectedSalaryRange}zł`;
+            if (!ranges.includes(formattedSelectedRange)) {
                 isValid = false;
             }
         }
 
+        console.log("Current filters from URL:", currentFilters);
+
         if (!isValid) {
+            console.log("Filters are not valid:", currentFilters);
             setShowAlert(true);
             setJobOffers([]);
             setTotalPages(0);
@@ -106,6 +110,7 @@ function JobOffersByCategory() {
                 response = await searchJobOffersByPosition(categoryId, page, searchQuery);
             } else if (Object.values(currentFilters).some(value => value && (Array.isArray(value) ? value.length : true))) {
                 response = await filtrateJobOffers(categoryId, page, currentFilters);
+                console.log("Response from backend:", response);
             } else {
                 response = await fetchAllJobOffers(categoryId, page);
             }
@@ -132,6 +137,7 @@ function JobOffersByCategory() {
 
     // Aktualizacja URL
     const updateUrl = (page, searchQuery = "", currentFilters = filters) => {
+        console.log("UPDATE URL: ", currentFilters)
         const params = new URLSearchParams();
         if (searchQuery) {
             params.set('search', searchQuery);
@@ -222,39 +228,37 @@ function JobOffersByCategory() {
         fetchData(currentPage, searchQuery, newFilters);
     };
 
-    // Usuwanie pojedynczych filtrów
-    const removeFilter = (filterType, valueToRemove) => {
-        setFilters(prevFilters => {
-            const updatedFilters = { ...prevFilters };
-            if (Array.isArray(updatedFilters[filterType])) {
-                updatedFilters[filterType] = updatedFilters[filterType].filter(value => value !== valueToRemove);
-            } else {
-                updatedFilters[filterType] = null;
-            }
+    const calculateNewFilters = (currentFilters, filterType, valueToRemove) => {
+        const newFilters = { ...currentFilters }; // Tworzenie kopii obiektu filtrów
 
-            return updatedFilters;
-        });
-
-        setAppliedFilters(prevAppliedFilters => {
-            const updatedAppliedFilters = { ...prevAppliedFilters };
-            if (Array.isArray(updatedAppliedFilters[filterType])) {
-                updatedAppliedFilters[filterType] = updatedAppliedFilters[filterType].filter(value => value !== valueToRemove);
-            } else {
-                updatedAppliedFilters[filterType] = null;
-            }
-            return updatedAppliedFilters;
-        });
-
-        const newFilters = { ...filters };
+        // Sprawdzanie typu filtra i odpowiednie jego aktualizowanie
         if (Array.isArray(newFilters[filterType])) {
-            newFilters[filterType] = newFilters[filterType].filter(value => value !== valueToRemove);
+            // Jeśli filtr jest tablicą, usuwamy z niej wartość
+            newFilters[filterType] = newFilters[filterType].filter(value => value === valueToRemove);
         } else {
+            // Jeśli filtr nie jest tablicą, ustawiamy go na null (lub inną domyślną wartość)
             newFilters[filterType] = null;
         }
 
+        return newFilters;
+    };
+
+
+
+    const removeFilter = (filterType, valueToRemove) => {
+        // Oblicz nowe filtry bez usuwanego filtra
+        const newFilters = calculateNewFilters(filters, filterType, valueToRemove);
+
+        // Bezpośrednio aktualizuj stan za pomocą nowych filtrów
+        setFilters(newFilters);
+        setAppliedFilters(newFilters);
+
+        // Bezpośrednio przekazuj nowe filtry do funkcji updateUrl i fetchData
         updateUrl(currentPage, searchQuery, newFilters);
         fetchData(currentPage, searchQuery, newFilters);
     };
+
+
 
     // Sprawdzenie czy są wybrane jakieś filtry
     const areAnyFiltersApplied = () => {
