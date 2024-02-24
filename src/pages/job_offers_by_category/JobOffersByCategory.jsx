@@ -243,8 +243,6 @@ function JobOffersByCategory() {
         return newFilters;
     };
 
-
-
     const removeFilter = (filterType, valueToRemove) => {
         // Oblicz nowe filtry bez usuwanego filtra
         const newFilters = calculateNewFilters(filters, filterType, valueToRemove);
