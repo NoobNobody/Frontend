@@ -22,15 +22,15 @@ function HomePage() {
                 const searchParams = new URLSearchParams({
                     province: province,
                     search: query,
-                    page: page
+                    page
                 }).toString();
 
                 navigate(`/offers/?${searchParams}`, {
                     state: {
                         jobOffers: result,
-                        query: query,
-                        province: province,
-                        currentPage: page
+                        query,
+                        province,
+                        page
                     }
                 });
                 setIsLoading(false);

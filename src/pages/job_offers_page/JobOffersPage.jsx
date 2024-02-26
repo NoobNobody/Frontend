@@ -44,11 +44,12 @@ function JobOffersPage() {
 
         try {
             let response;
-            const areFiltersSet = Object.values(filters).some(value => Array.isArray(value) ? value.length > 0 : value);
+            const safeFilters = filters || {};
+            const areFiltersSet = Object.values(safeFilters).some(value => Array.isArray(value) ? value.length > 0 : value);
             const isSearchCriteriaSet = query || province || areFiltersSet;
 
             if (isSearchCriteriaSet) {
-                response = await filtrateAndSearchAllJobOffers(query, province, currentPage, filters);
+                response = await filtrateAndSearchAllJobOffers(query, province, currentPage, safeFilters);
             } else {
                 response = await fetchAllJobOffers(currentPage);
             }
@@ -82,8 +83,8 @@ function JobOffersPage() {
         const params = new URLSearchParams(pageLocation.search);
         const page = parseInt(params.get('page'), 10) || 1;
         const queryFromUrl = params.get('search') || "";
-        const provinceFromUrl = params.get('province') || "";
-
+        const province = params.get('province') || "";
+        console.log('URL parameter province:', province);
         let isValid = true;
 
         let currentFilters = {
@@ -129,11 +130,13 @@ function JobOffersPage() {
         setAppliedFilters(currentFilters);
         setQuery(queryFromUrl);
         setCurrentPage(page);
-        await fetchData(page, queryFromUrl, provinceFromUrl, currentFilters);
+        setProvince(province);
+        await fetchData(page, queryFromUrl, province, currentFilters);
     };
 
     const updateUrl = (page, query, province, currentFilters = filters) => {
         const params = new URLSearchParams();
+        console.log("Before updating URL with province:", province);
         if (province) {
             params.set('province', province)
         }
@@ -157,6 +160,7 @@ function JobOffersPage() {
 
         navigate(`${pageLocation.pathname}?${params.toString()}`, { replace: true });
     };
+
 
     const handleChangePage = (page) => {
         setCurrentPage(page);
@@ -211,8 +215,6 @@ function JobOffersPage() {
         }
     };
 
-
-    // Obsługa wybrania filtrów
     const handleFilterChange = (filterType, value) => {
         const newFilters = { ...filters, [filterType]: value };
         setFilters(newFilters);
@@ -307,7 +309,7 @@ function JobOffersPage() {
             return newFilters;
         });
     };
-
+    console.log('Province state before render:', province);
     return (
         <Container className='mt-2'>
             <Row className='mt-5'>
