@@ -1,26 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Container, Row, Col, Form, FormControl, InputGroup, Button, Alert } from 'react-bootstrap';
-import { fetchAllJobOffersByCategory, filtrateJobOffers } from '../../services/api/jobOffersService';
-import CustomPagination from '../../components/pagination/CustomPagination';
+import { useNavigate, useLocation } from 'react-router-dom';
 import JobCard from '../../components/job_card/JobCard';
-import { scrollToTop } from '../../utils/scrollToTop';
-import './joboffersbycategory.css';
-import { dateFilters, jobModelFilters, jobTypeFilters, jobTimeFilters, salaryTypes, salaryRange, filterCategories, filtersCombined } from '../../utils/Filters';
+import { Container, Row, Col, Form, FormControl, InputGroup, Button, Alert } from 'react-bootstrap';
+import CustomPagination from '../../components/pagination/CustomPagination';
+import { fetchAllJobOffers, searchJobOffersByPositionAndProvince, filtrateAndSearchAllJobOffers } from '../../services/api/jobOffersService';
 import ObjectFilter from '../../components/filters/ObjectFilter';
 import ElementFilter from '../../components/filters/ElementFilter';
 import SalaryTypeFilter from '../../components/filters/salary_type_filter/SalaryTypeFilter';
-
-function JobOffersByCategory() {
-    const location = useLocation();
-    const { categoryId } = useParams();
+import { dateFilters, jobModelFilters, jobTypeFilters, jobTimeFilters, salaryTypes, salaryRange, provinceNames, filterCategories, filtersCombined } from '../../utils/Filters';
+import { scrollToTop } from '../../utils/scrollToTop';
+function JobOffersPage() {
     const navigate = useNavigate();
-    const [showAlert, setShowAlert] = useState(false);
-    const [query, setQuery] = useState("");
-    const [jobOffers, setJobOffers] = useState([]);
+    const pageLocation = useLocation();
+
+    const jobOffersData = location.state?.jobOffers || { jobOffers: [], totalPages: 0, currentPage: 1 };
+    const [jobOffers, setJobOffers] = useState(Array.isArray(jobOffersData.jobOffers) ? jobOffersData.jobOffers : []);
+    const [currentPage, setCurrentPage] = useState(jobOffersData.currentPage || 1);
+    const [totalPages, setTotalPages] = useState(jobOffersData.totalPages || 0);
+    const [query, setQuery] = useState(location.state?.query || '');
+    const [province, setProvince] = useState(location.state?.province || '');
     const [searchQuery, setSearchQuery] = useState("");
-    const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(0);
+    const [showAlert, setShowAlert] = useState(false);
+
     const [filters, setFilters] = useState({
         selectedDate: null,
         selectedJobTime: [],
@@ -38,15 +39,50 @@ function JobOffersByCategory() {
         selectedSalaryRange: null,
     });
 
+    const fetchData = async (currentPage, query, province, filters) => {
+        console.log("Fetching data with:", { currentPage, query, province, filters });
+
+        try {
+            let response;
+            const areFiltersSet = Object.values(filters).some(value => Array.isArray(value) ? value.length > 0 : value);
+            const isSearchCriteriaSet = query || province || areFiltersSet;
+
+            if (isSearchCriteriaSet) {
+                response = await filtrateAndSearchAllJobOffers(query, province, currentPage, filters);
+            } else {
+                response = await fetchAllJobOffers(currentPage);
+            }
+
+            console.log("Received data:", response);
+            if (response.jobOffers.length === 0) {
+                setShowAlert(true);
+                setJobOffers([]);
+                setTotalPages(0);
+            } else {
+                setJobOffers(response.jobOffers);
+                setTotalPages(response.totalPages);
+                setCurrentPage(currentPage);
+                scrollToTop();
+                setShowAlert(false);
+            }
+        } catch (error) {
+            console.error("Error fetching data:", error.message);
+            setShowAlert(true);
+            setJobOffers([]);
+            setTotalPages(0);
+        }
+    };
+
+
     useEffect(() => {
         fetchDataFromUrl();
-    }, [location.search, categoryId]);
+    }, [pageLocation.search]);
 
-    // Pobieranie danych manualnie przy pomocy URL
     const fetchDataFromUrl = async () => {
-        const params = new URLSearchParams(location.search);
+        const params = new URLSearchParams(pageLocation.search);
         const page = parseInt(params.get('page'), 10) || 1;
-        const searchQueryFromUrl = params.get('search') || "";
+        const queryFromUrl = params.get('search') || "";
+        const provinceFromUrl = params.get('province') || "";
 
         let isValid = true;
 
@@ -81,62 +117,32 @@ function JobOffersByCategory() {
             }
         }
 
-        console.log("Current filters from URL:", currentFilters);
-
         if (!isValid) {
-            console.log("Filters are not valid:", currentFilters);
             setShowAlert(true);
             setJobOffers([]);
             setTotalPages(0);
-            navigate(`/oferty/kategoria/${categoryId}/`);
+            navigate(`${pageLocation.pathname}`, { replace: true });
             return;
         }
 
         setFilters(currentFilters);
         setAppliedFilters(currentFilters);
-        setQuery(searchQueryFromUrl);
-        setSearchQuery(searchQueryFromUrl);
+        setQuery(queryFromUrl);
         setCurrentPage(page);
-        await fetchData(page, searchQueryFromUrl, currentFilters);
+        await fetchData(page, queryFromUrl, provinceFromUrl, currentFilters);
     };
 
-    // Pobieranie danych na stronie
-    const fetchData = async (page, searchQuery = "", currentFilters = filters) => {
-        console.log("Fetching data with:", { page, searchQuery, currentFilters });
-        try {
-            let response;
-            if (searchQuery || Object.values(currentFilters).some(value => value)) {
-                response = await filtrateJobOffers(categoryId, page, currentFilters, searchQuery);
-            } else {
-                response = await fetchAllJobOffersByCategory(categoryId, page);
-            }
-
-            console.log("Received data:", response);
-            if (response.jobOffers.length === 0) {
-                setShowAlert(true);
-                setJobOffers([]);
-                setTotalPages(0);
-            } else {
-                setJobOffers(response.jobOffers);
-                setTotalPages(response.totalPages);
-                setCurrentPage(page);
-                scrollToTop();
-                setShowAlert(false);
-            }
-        } catch (error) {
-            console.error("Error fetching data:", error.message);
-            setShowAlert(true);
-            setJobOffers([]);
-            setTotalPages(0);
-        }
-    };
-
-    // Aktualizacja URL
-    const updateUrl = (page, searchQuery = "", currentFilters = filters) => {
-        console.log("UPDATE URL: ", currentFilters)
+    const updateUrl = (page, query, province, currentFilters = filters) => {
         const params = new URLSearchParams();
-        if (searchQuery) {
-            params.set('search', searchQuery);
+        if (province) {
+            params.set('province', province)
+        }
+
+        if (query) {
+            params.set('search', query);
+        }
+        if (page) {
+            params.set('page', page.toString());
         }
         Object.entries(currentFilters).forEach(([key, value]) => {
             if (Array.isArray(value)) {
@@ -148,33 +154,26 @@ function JobOffersByCategory() {
                 params.set(key, value);
             }
         });
-        if (page !== 1) {
-            params.set('page', page);
-        }
-        const finalUrl = `/oferty/kategoria/${categoryId}/?${params.toString()}`;
-        console.log("Final URL:", finalUrl);
 
-        navigate(finalUrl, { replace: true });
+        navigate(`${pageLocation.pathname}?${params.toString()}`, { replace: true });
     };
 
-    // Obsługa zmiany strony
-    const handleChangePage = (newPage) => {
-        setCurrentPage(newPage);
-        updateUrl(newPage, searchQuery, filters);
-        fetchData(newPage, searchQuery, filters);
+    const handleChangePage = (page) => {
+        setCurrentPage(page);
+        updateUrl(page, query, province);
+        fetchData(page, query, province);
     };
 
-    // Szukanie ofert za pomocą stanowiska
     const handleSearchSubmit = async (event) => {
         event.preventDefault();
         setSearchQuery(query);
-        updateUrl(1, query, filters);
-        await fetchData(1, query, filters);
+        updateUrl(1, query, province);
+        await fetchData(1, query, province);
     };
 
-    // Czyszczenie pola szukania ofert za pomocą stanowiska
     const clearSearch = () => {
         setQuery("");
+        setProvince("");
         if (searchQuery) {
             setSearchQuery("");
             const newFilters = {
@@ -187,14 +186,13 @@ function JobOffersByCategory() {
             };
             setFilters(newFilters);
             setAppliedFilters(newFilters);
-            updateUrl(1, "", newFilters);
-            fetchData(1, "", newFilters);
+            updateUrl(1, "", "", filters);
+            fetchData(1, "", "", filters);
         } else {
             setQuery("");
         }
     };
 
-    // Filtrowanie ofert 
     const handleFilterSubmit = async (event) => {
         event.preventDefault();
 
@@ -208,10 +206,11 @@ function JobOffersByCategory() {
             alert("Wybierz zakres zarobków");
         } else if (isAnyFilterApplied) {
             setSearchQuery(query);
-            updateUrl(1, query, filters);
-            await fetchData(1, query, filters);
+            updateUrl(1, query, province, filters);
+            await fetchData(1, query, province, filters);
         }
     };
+
 
     // Obsługa wybrania filtrów
     const handleFilterChange = (filterType, value) => {
@@ -231,8 +230,9 @@ function JobOffersByCategory() {
         };
         setFilters(newFilters);
         setAppliedFilters(newFilters);
-        updateUrl(currentPage, searchQuery, newFilters);
-        fetchData(currentPage, searchQuery, newFilters);
+
+        updateUrl(currentPage, searchQuery, province, newFilters);
+        fetchData(currentPage, searchQuery, province, newFilters);
     };
 
     // Sprawdzenie które filtry są do usunięcia
@@ -261,8 +261,8 @@ function JobOffersByCategory() {
         setFilters(newFilters);
         setAppliedFilters(newFilters);
 
-        updateUrl(currentPage, searchQuery, newFilters);
-        fetchData(currentPage, searchQuery, newFilters);
+        updateUrl(currentPage, searchQuery, province, newFilters);
+        fetchData(currentPage, searchQuery, province, newFilters);
     };
 
     // Sprawdzenie czy są wybrane jakieś filtry
@@ -310,7 +310,6 @@ function JobOffersByCategory() {
 
     return (
         <Container className='mt-2'>
-            <h2>{searchQuery ? `Szukane stanowisko: ${searchQuery}` : "Wszystkie oferty"}</h2>
             <Row className='mt-5'>
                 <Col sm={4} className="filter-column">
                     {areAnyFiltersApplied() && (
@@ -386,6 +385,26 @@ function JobOffersByCategory() {
                             value={query}
                             onChange={e => setQuery(e.target.value)}
                         />
+                        <Form.Select
+                            aria-label="Województwo"
+                            value={province}
+                            onChange={e => setProvince(e.target.value)}
+                        >
+                            <option value="">Wybierz województwo</option>
+                            {Object.entries(provinceNames).map(([key, name]) => (
+                                <option key={key} value={name}>{name}</option>
+                            ))}
+                        </Form.Select>
+                        {/* <Form.Select
+                            aria-label="Lokalizacja"
+                            value={selectedLocation}
+                            onChange={e => setSelectedLocation(e.target.value)}
+                        >
+                            <option value="">Wybierz lokalizację</option>
+                            {availableLocations.map(location => (
+                                <option key={location} value={location}>{location}</option>
+                            ))}
+                        </Form.Select> */}
                         <Button variant="outline-secondary" type="submit">
                             Search
                         </Button>
@@ -403,17 +422,11 @@ function JobOffersByCategory() {
                     {jobOffers.map((offer, index) => (
                         <JobCard key={offer.id || index} offer={offer} />
                     ))}
-                    <div className="d-flex justify-content-center" style={{ marginTop: "20px" }}>
-                        <CustomPagination
-                            currentPage={currentPage}
-                            totalPages={totalPages}
-                            onPageChange={handleChangePage}
-                        />
-                    </div>
+                    <CustomPagination currentPage={currentPage} totalPages={totalPages} onPageChange={handleChangePage} />
                 </Col>
             </Row>
         </Container >
     );
 }
 
-export default JobOffersByCategory;
+export default JobOffersPage;

@@ -1,10 +1,11 @@
 import { createBrowserRouter } from 'react-router-dom';
-import JobOffersPage from '../pages/JobOffersPage';
+import JobOffersPage from '../pages/job_offers_page/JobOffersPage';
 import NotFoundPage from '../pages/NotFoundPage';
 import HomePage from '../pages/HomePage';
 import CategoriesPage from '../pages/categories_page/CategoriesPage';
 import EmployersPage from '../pages/EmployersPage';
 import JobOffersByCategory from '../pages/job_offers_by_category/JobOffersByCategory';
+
 function Router() {
     return createBrowserRouter([
         {
@@ -13,7 +14,7 @@ function Router() {
             errorElement: <NotFoundPage />
         },
         {
-            path: "/oferty",
+            path: "/offers",
             element: <JobOffersPage />
         },
         {

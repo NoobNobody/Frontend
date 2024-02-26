@@ -23,7 +23,7 @@ function Navbar() {
             <ReactNavbar.Collapse id="basic-navbar-nav" className="navbar__right-menu">
                 <Nav className="ms-auto">
                     <Nav.Link href="/">Home</Nav.Link>
-                    <Nav.Link href="/oferty">Oferty</Nav.Link>
+                    <Nav.Link href="/offers">Oferty</Nav.Link>
                     <Nav.Link href="/pracodawcy">Pracodawcy</Nav.Link>
                     <Nav.Link href="/kategorie">Kategorie</Nav.Link>
                     <NavDropdown title="Dropdown" id="basic-nav-dropdown" >

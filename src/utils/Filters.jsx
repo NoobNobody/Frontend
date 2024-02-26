@@ -70,4 +70,24 @@ const filtersCombined = {
     temporary: 'Tymczasowa praca',
 };
 
-export { dateFilters, jobTypeFilters, jobModelFilters, jobTimeFilters, salaryTypes, filterCategories, filtersCombined, salaryRange }
+const provinceNames = {
+    dolnoslaskie: "dolnośląskie",
+    kujawskopomorskie: "kujawsko-pomorskie",
+    lubelskie: "lubelskie",
+    lubuskie: "lubuskie",
+    lodzkie: "łódzkie",
+    malopolskie: "małopolskie",
+    mazowieckie: "mazowieckie",
+    opolskie: "opolskie",
+    podkarpackie: "podkarpackie",
+    podlaskie: "podlaskie",
+    pomorskie: "pomorskie",
+    slaskie: "śląskie",
+    swietokrzyskie: "świętokrzyskie",
+    warminskomazurskie: "warmińsko-mazurskie",
+    wielkopolskie: "wielkopolskie",
+    zachodniopomorskie: "zachodniopomorskie",
+};
+
+
+export { dateFilters, jobTypeFilters, jobModelFilters, jobTimeFilters, salaryTypes, filterCategories, filtersCombined, salaryRange, provinceNames }
