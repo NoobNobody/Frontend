@@ -18,18 +18,7 @@ const fetchAllJobOffersByCategory = async (categoryId, page) => {
     }
 };
 
-const searchJobOffersByPositionAndProvince = async (searchQuery, province, page) => {
-    try {
-        const response = await axios.get(`http://localhost:8000/api/offers/`, {
-            params: { search: searchQuery, province, page }
-        });
-        return handleResponse(response);
-    } catch (error) {
-        throw new Error(error.response?.data?.message || "Wystąpił błąd podczas wyszukiwania ofert pracy.");
-    }
-};
-
-const filtrateJobOffers = async (categoryId, page, filters, searchQuery = "") => {
+const filtrateAndSearchJobOffersByCategory = async (categoryId, page, filters, searchQuery = "") => {
     try {
         const params = createFilterParams(filters, page, searchQuery);
         const response = await axios.get(`http://localhost:8000/api/oferty/filtrowane/${categoryId}/`, { params });
@@ -68,12 +57,11 @@ const createFilterParams = (filters, page, searchQuery) => {
     return params;
 };
 
-const filtrateAndSearchAllJobOffers = async (query, province, currentPage, filters) => {
+const searchJobOffersByPositionAndProvince = async (searchQuery, province, page) => {
     try {
-        const params = createFilterParams(filters, currentPage, query);
-        params.set('province', province);
-
-        const response = await axios.get(`http://localhost:8000/api/all_offers/search/`, { params: params });
+        const response = await axios.get(`http://localhost:8000/api/offers/search/`, {
+            params: { search: searchQuery, province, page }
+        });
         return handleResponse(response);
     } catch (error) {
         throw new Error(error.response?.data?.message || "Wystąpił błąd podczas wyszukiwania ofert pracy.");
@@ -81,4 +69,19 @@ const filtrateAndSearchAllJobOffers = async (query, province, currentPage, filte
 };
 
 
-export { fetchAllJobOffers, fetchAllJobOffersByCategory, searchJobOffersByPositionAndProvince, filtrateJobOffers, filtrateAndSearchAllJobOffers };
+const filtrateAndSearchAllJobOffers = async (query, province, currentPage, filters) => {
+    try {
+        const params = createFilterParams(filters, currentPage, query);
+        params.set('province', province);
+
+        const response = await axios.get(`http://localhost:8000/api/offers/search/`, { params: params });
+        return handleResponse(response);
+    } catch (error) {
+        throw new Error(error.response?.data?.message || "Wystąpił błąd podczas wyszukiwania ofert pracy.");
+    }
+};
+
+
+
+
+export { fetchAllJobOffers, fetchAllJobOffersByCategory, filtrateAndSearchJobOffersByCategory, filtrateAndSearchAllJobOffers, searchJobOffersByPositionAndProvince };

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Container, Row, Col, Form, FormControl, InputGroup, Button, Alert } from 'react-bootstrap';
-import { fetchAllJobOffersByCategory, filtrateJobOffers } from '../../services/api/jobOffersService';
+import { fetchAllJobOffersByCategory, filtrateAndSearchJobOffersByCategory } from '../../services/api/jobOffersService';
 import CustomPagination from '../../components/pagination/CustomPagination';
 import JobCard from '../../components/job_card/JobCard';
 import { scrollToTop } from '../../utils/scrollToTop';
@@ -21,6 +21,8 @@ function JobOffersByCategory() {
     const [searchQuery, setSearchQuery] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
+    const [isLoading, setIsLoading] = useState(false);
+
     const [filters, setFilters] = useState({
         selectedDate: null,
         selectedJobTime: [],
@@ -42,71 +44,77 @@ function JobOffersByCategory() {
         fetchDataFromUrl();
     }, [location.search, categoryId]);
 
-    // Pobieranie danych manualnie przy pomocy URL
     const fetchDataFromUrl = async () => {
-        const params = new URLSearchParams(location.search);
-        const page = parseInt(params.get('page'), 10) || 1;
-        const searchQueryFromUrl = params.get('search') || "";
+        setIsLoading(true);
+        try {
+            const params = new URLSearchParams(location.search);
+            const page = parseInt(params.get('page'), 10) || 1;
+            const searchQueryFromUrl = params.get('search') || "";
 
-        let isValid = true;
+            let isValid = true;
 
-        let currentFilters = {
-            selectedDate: params.get('selectedDate'),
-            selectedJobTime: params.getAll('selectedJobTime'),
-            selectedJobModel: params.getAll('selectedJobModel'),
-            selectedJobType: params.getAll('selectedJobType'),
-            selectedSalaryType: params.get('selectedSalaryType'),
-            selectedSalaryRange: params.get('selectedSalaryRange'),
-        };
+            let currentFilters = {
+                selectedDate: params.get('selectedDate'),
+                selectedJobTime: params.getAll('selectedJobTime'),
+                selectedJobModel: params.getAll('selectedJobModel'),
+                selectedJobType: params.getAll('selectedJobType'),
+                selectedSalaryType: params.get('selectedSalaryType'),
+                selectedSalaryRange: params.get('selectedSalaryRange'),
+            };
 
-        if (currentFilters.selectedDate && !dateFilters[currentFilters.selectedDate]) {
-            isValid = false;
-        }
-
-        ['selectedJobTime', 'selectedJobModel', 'selectedJobType'].forEach(filterKey => {
-            if (currentFilters[filterKey].some(value => !filtersCombined[value])) {
+            if (currentFilters.selectedDate && !dateFilters[currentFilters.selectedDate]) {
                 isValid = false;
             }
-        });
 
-        if (currentFilters.selectedSalaryType && !salaryTypes[currentFilters.selectedSalaryType]) {
-            isValid = false;
-        }
+            ['selectedJobTime', 'selectedJobModel', 'selectedJobType'].forEach(filterKey => {
+                if (currentFilters[filterKey].some(value => !filtersCombined[value])) {
+                    isValid = false;
+                }
+            });
 
-        if (currentFilters.selectedSalaryRange && currentFilters.selectedSalaryType) {
-            const ranges = salaryRange[currentFilters.selectedSalaryType + '_range'];
-            const formattedSelectedRange = `${currentFilters.selectedSalaryRange}zł`;
-            if (!ranges.includes(formattedSelectedRange)) {
+            if (currentFilters.selectedSalaryType && !salaryTypes[currentFilters.selectedSalaryType]) {
                 isValid = false;
             }
+
+            if (currentFilters.selectedSalaryRange && currentFilters.selectedSalaryType) {
+                const ranges = salaryRange[currentFilters.selectedSalaryType + '_range'];
+                const formattedSelectedRange = `${currentFilters.selectedSalaryRange}zł`;
+                if (!ranges.includes(formattedSelectedRange)) {
+                    isValid = false;
+                }
+            }
+
+            console.log("Current filters from URL:", currentFilters);
+
+            if (!isValid) {
+                console.log("Filters are not valid:", currentFilters);
+                setShowAlert(true);
+                setJobOffers([]);
+                setTotalPages(0);
+                navigate(`/oferty/kategoria/${categoryId}/`);
+                return;
+            }
+
+            setFilters(currentFilters);
+            setAppliedFilters(currentFilters);
+            setQuery(searchQueryFromUrl);
+            setSearchQuery(searchQueryFromUrl);
+            setCurrentPage(page);
+            await fetchData(page, searchQueryFromUrl, currentFilters);
+            setIsLoading(false);
+        } catch (error) {
+            setIsLoading(false);
         }
-
-        console.log("Current filters from URL:", currentFilters);
-
-        if (!isValid) {
-            console.log("Filters are not valid:", currentFilters);
-            setShowAlert(true);
-            setJobOffers([]);
-            setTotalPages(0);
-            navigate(`/oferty/kategoria/${categoryId}/`);
-            return;
-        }
-
-        setFilters(currentFilters);
-        setAppliedFilters(currentFilters);
-        setQuery(searchQueryFromUrl);
-        setSearchQuery(searchQueryFromUrl);
-        setCurrentPage(page);
-        await fetchData(page, searchQueryFromUrl, currentFilters);
     };
 
     // Pobieranie danych na stronie
     const fetchData = async (page, searchQuery = "", currentFilters = filters) => {
         console.log("Fetching data with:", { page, searchQuery, currentFilters });
+        setIsLoading(true);
         try {
-            let response;
+            let response; s
             if (searchQuery || Object.values(currentFilters).some(value => value)) {
-                response = await filtrateJobOffers(categoryId, page, currentFilters, searchQuery);
+                response = await filtrateAndSearchJobOffersByCategory(categoryId, page, currentFilters, searchQuery);
             } else {
                 response = await fetchAllJobOffersByCategory(categoryId, page);
             }
@@ -123,11 +131,13 @@ function JobOffersByCategory() {
                 scrollToTop();
                 setShowAlert(false);
             }
+            setIsLoading(false);
         } catch (error) {
             console.error("Error fetching data:", error.message);
             setShowAlert(true);
             setJobOffers([]);
             setTotalPages(0);
+            setIsLoading(false);
         }
     };
 
@@ -307,6 +317,16 @@ function JobOffersByCategory() {
             return newFilters;
         });
     };
+
+    if (isLoading) {
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Ładowanie...</span>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <Container className='mt-2'>

@@ -8,21 +8,39 @@ import categoryImages from '../../utils/categoryImages';
 function CategoriesPage() {
     const [categories, setCategories] = useState([]);
     const navigate = useNavigate();
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
+        setIsLoading(true);
+
         axios.get('http://localhost:8000/api/kategorie/')
             .then(response => {
                 setCategories(response.data);
+                setIsLoading(false);
                 console.log(response.data);
             })
             .catch(error => {
                 console.log(error);
+                setIsLoading(false);
             });
+
+        return () => setIsLoading(false);
     }, []);
+
 
     const handleCardClick = (categoryId) => {
         navigate(`/oferty/kategoria/${categoryId}`);
     };
+
+    if (isLoading) {
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Ładowanie...</span>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <Container fluid>

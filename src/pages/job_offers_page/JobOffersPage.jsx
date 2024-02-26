@@ -3,12 +3,13 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import JobCard from '../../components/job_card/JobCard';
 import { Container, Row, Col, Form, FormControl, InputGroup, Button, Alert } from 'react-bootstrap';
 import CustomPagination from '../../components/pagination/CustomPagination';
-import { fetchAllJobOffers, searchJobOffersByPositionAndProvince, filtrateAndSearchAllJobOffers } from '../../services/api/jobOffersService';
+import { fetchAllJobOffers, filtrateAndSearchAllJobOffers } from '../../services/api/jobOffersService';
 import ObjectFilter from '../../components/filters/ObjectFilter';
 import ElementFilter from '../../components/filters/ElementFilter';
 import SalaryTypeFilter from '../../components/filters/salary_type_filter/SalaryTypeFilter';
 import { dateFilters, jobModelFilters, jobTypeFilters, jobTimeFilters, salaryTypes, salaryRange, provinceNames, filterCategories, filtersCombined } from '../../utils/Filters';
 import { scrollToTop } from '../../utils/scrollToTop';
+
 function JobOffersPage() {
     const navigate = useNavigate();
     const pageLocation = useLocation();
@@ -21,6 +22,7 @@ function JobOffersPage() {
     const [province, setProvince] = useState(location.state?.province || '');
     const [searchQuery, setSearchQuery] = useState("");
     const [showAlert, setShowAlert] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     const [filters, setFilters] = useState({
         selectedDate: null,
@@ -41,7 +43,7 @@ function JobOffersPage() {
 
     const fetchData = async (currentPage, query, province, filters) => {
         console.log("Fetching data with:", { currentPage, query, province, filters });
-
+        setIsLoading(true);
         try {
             let response;
             const safeFilters = filters || {};
@@ -66,11 +68,13 @@ function JobOffersPage() {
                 scrollToTop();
                 setShowAlert(false);
             }
+            setIsLoading(false);
         } catch (error) {
             console.error("Error fetching data:", error.message);
             setShowAlert(true);
             setJobOffers([]);
             setTotalPages(0);
+            setIsLoading(false);
         }
     };
 
@@ -80,58 +84,64 @@ function JobOffersPage() {
     }, [pageLocation.search]);
 
     const fetchDataFromUrl = async () => {
-        const params = new URLSearchParams(pageLocation.search);
-        const page = parseInt(params.get('page'), 10) || 1;
-        const queryFromUrl = params.get('search') || "";
-        const province = params.get('province') || "";
-        console.log('URL parameter province:', province);
-        let isValid = true;
+        setIsLoading(true);
+        try {
+            const params = new URLSearchParams(pageLocation.search);
+            const page = parseInt(params.get('page'), 10) || 1;
+            const queryFromUrl = params.get('search') || "";
+            const province = params.get('province') || "";
+            console.log('URL parameter province:', province);
+            let isValid = true;
 
-        let currentFilters = {
-            selectedDate: params.get('selectedDate'),
-            selectedJobTime: params.getAll('selectedJobTime'),
-            selectedJobModel: params.getAll('selectedJobModel'),
-            selectedJobType: params.getAll('selectedJobType'),
-            selectedSalaryType: params.get('selectedSalaryType'),
-            selectedSalaryRange: params.get('selectedSalaryRange'),
-        };
+            let currentFilters = {
+                selectedDate: params.get('selectedDate'),
+                selectedJobTime: params.getAll('selectedJobTime'),
+                selectedJobModel: params.getAll('selectedJobModel'),
+                selectedJobType: params.getAll('selectedJobType'),
+                selectedSalaryType: params.get('selectedSalaryType'),
+                selectedSalaryRange: params.get('selectedSalaryRange'),
+            };
 
-        if (currentFilters.selectedDate && !dateFilters[currentFilters.selectedDate]) {
-            isValid = false;
-        }
-
-        ['selectedJobTime', 'selectedJobModel', 'selectedJobType'].forEach(filterKey => {
-            if (currentFilters[filterKey].some(value => !filtersCombined[value])) {
+            if (currentFilters.selectedDate && !dateFilters[currentFilters.selectedDate]) {
                 isValid = false;
             }
-        });
 
-        if (currentFilters.selectedSalaryType && !salaryTypes[currentFilters.selectedSalaryType]) {
-            isValid = false;
-        }
+            ['selectedJobTime', 'selectedJobModel', 'selectedJobType'].forEach(filterKey => {
+                if (currentFilters[filterKey].some(value => !filtersCombined[value])) {
+                    isValid = false;
+                }
+            });
 
-        if (currentFilters.selectedSalaryRange && currentFilters.selectedSalaryType) {
-            const ranges = salaryRange[currentFilters.selectedSalaryType + '_range'];
-            const formattedSelectedRange = `${currentFilters.selectedSalaryRange}zł`;
-            if (!ranges.includes(formattedSelectedRange)) {
+            if (currentFilters.selectedSalaryType && !salaryTypes[currentFilters.selectedSalaryType]) {
                 isValid = false;
             }
-        }
 
-        if (!isValid) {
-            setShowAlert(true);
-            setJobOffers([]);
-            setTotalPages(0);
-            navigate(`${pageLocation.pathname}`, { replace: true });
-            return;
-        }
+            if (currentFilters.selectedSalaryRange && currentFilters.selectedSalaryType) {
+                const ranges = salaryRange[currentFilters.selectedSalaryType + '_range'];
+                const formattedSelectedRange = `${currentFilters.selectedSalaryRange}zł`;
+                if (!ranges.includes(formattedSelectedRange)) {
+                    isValid = false;
+                }
+            }
 
-        setFilters(currentFilters);
-        setAppliedFilters(currentFilters);
-        setQuery(queryFromUrl);
-        setCurrentPage(page);
-        setProvince(province);
-        await fetchData(page, queryFromUrl, province, currentFilters);
+            if (!isValid) {
+                setShowAlert(true);
+                setJobOffers([]);
+                setTotalPages(0);
+                navigate(`${pageLocation.pathname}`, { replace: true });
+                return;
+            }
+
+            setFilters(currentFilters);
+            setAppliedFilters(currentFilters);
+            setQuery(queryFromUrl);
+            setCurrentPage(page);
+            setProvince(province);
+            await fetchData(page, queryFromUrl, province, currentFilters);
+            setIsLoading(false);
+        } catch (error) {
+            setIsLoading(false);
+        }
     };
 
     const updateUrl = (page, query, province, currentFilters = filters) => {
@@ -220,7 +230,6 @@ function JobOffersPage() {
         setFilters(newFilters);
     };
 
-    // Czyszczenie wszsytkich filtrów
     const clearAllFilters = () => {
         const newFilters = {
             selectedDate: null,
@@ -233,11 +242,10 @@ function JobOffersPage() {
         setFilters(newFilters);
         setAppliedFilters(newFilters);
 
-        updateUrl(currentPage, searchQuery, province, newFilters);
-        fetchData(currentPage, searchQuery, province, newFilters);
+        updateUrl(1, searchQuery, province, newFilters);
+        fetchData(1, searchQuery, province, newFilters);
     };
 
-    // Sprawdzenie które filtry są do usunięcia
     const calculateNewFilters = (currentFilters, filterType, valueToRemove) => {
         const newFilters = { ...currentFilters };
 
@@ -249,7 +257,6 @@ function JobOffersPage() {
         return newFilters;
     };
 
-    // Usuwanie pojedynczych filtrów
     const removeFilter = (filterType, valueToRemove) => {
         let newFilters = { ...filters };
 
@@ -267,7 +274,6 @@ function JobOffersPage() {
         fetchData(currentPage, searchQuery, province, newFilters);
     };
 
-    // Sprawdzenie czy są wybrane jakieś filtry
     const areAnyFiltersApplied = () => {
         const isAnyFilterApplied = Object.entries(appliedFilters).some(([key, value]) => {
             if (Array.isArray(value)) {
@@ -281,7 +287,6 @@ function JobOffersPage() {
         return isAnyFilterApplied;
     };
 
-    // Obsługa typu zarobków
     const handleSalaryTypeChange = (salaryType) => {
         setFilters(prevFilters => {
             const newFilters = {
@@ -293,7 +298,6 @@ function JobOffersPage() {
         });
     };
 
-    // Obsługa zakresu zarobków
     const handleSalaryRangeChange = (range) => {
         let sanitizedRange;
         if (range.includes('Mniejsze niż')) {
@@ -309,7 +313,17 @@ function JobOffersPage() {
             return newFilters;
         });
     };
-    console.log('Province state before render:', province);
+
+    if (isLoading) {
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Ładowanie...</span>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <Container className='mt-2'>
             <Row className='mt-5'>
@@ -424,7 +438,9 @@ function JobOffersPage() {
                     {jobOffers.map((offer, index) => (
                         <JobCard key={offer.id || index} offer={offer} />
                     ))}
-                    <CustomPagination currentPage={currentPage} totalPages={totalPages} onPageChange={handleChangePage} />
+                    <div className="d-flex justify-content-center" style={{ marginTop: "20px" }}>
+                        <CustomPagination currentPage={currentPage} totalPages={totalPages} onPageChange={handleChangePage} />
+                    </div>
                 </Col>
             </Row>
         </Container >

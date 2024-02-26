@@ -20,9 +20,9 @@ function HomePage() {
             const result = await searchJobOffersByPositionAndProvince(query, province, page);
             if (result) {
                 const searchParams = new URLSearchParams({
-                    province: province,
+                    province,
                     search: query,
-                    page
+                    page: page.toString(),
                 }).toString();
 
                 navigate(`/offers/?${searchParams}`, {
@@ -30,8 +30,8 @@ function HomePage() {
                         jobOffers: result,
                         query,
                         province,
-                        page
-                    }
+                        page,
+                    },
                 });
                 setIsLoading(false);
             } else {
@@ -40,8 +40,10 @@ function HomePage() {
             }
         } catch (error) {
             console.error('Błąd podczas wyszukiwania ofert pracy:', error);
+            setIsLoading(false);
         }
     };
+
 
     if (isLoading) {
         return (
