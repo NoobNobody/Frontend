@@ -112,7 +112,7 @@ function JobOffersByCategory() {
         console.log("Fetching data with:", { page, searchQuery, currentFilters });
         setIsLoading(true);
         try {
-            let response; s
+            let response;
             if (searchQuery || Object.values(currentFilters).some(value => value)) {
                 response = await filtrateAndSearchJobOffersByCategory(categoryId, page, currentFilters, searchQuery);
             } else {

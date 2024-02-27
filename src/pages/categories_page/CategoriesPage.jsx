@@ -29,7 +29,7 @@ function CategoriesPage() {
 
 
     const handleCardClick = (categoryId) => {
-        navigate(`/oferty/kategoria/${categoryId}`);
+        navigate(`/offers/category/${categoryId}`);
     };
 
     if (isLoading) {

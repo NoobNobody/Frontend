@@ -41,17 +41,18 @@ function JobOffersPage() {
         selectedSalaryRange: null,
     });
 
-    const fetchData = async (currentPage, query, province, filters) => {
-        console.log("Fetching data with:", { currentPage, query, province, filters });
+    const fetchData = async (currentPage, query, location, province, filters) => {
+        console.log("Fetching data with:", { currentPage, query, province, location, filters });
         setIsLoading(true);
         try {
             let response;
             const safeFilters = filters || {};
             const areFiltersSet = Object.values(safeFilters).some(value => Array.isArray(value) ? value.length > 0 : value);
-            const isSearchCriteriaSet = query || province || areFiltersSet;
+            const isSearchCriteriaSet = query || province || (location && location !== 'undefined') || areFiltersSet;
 
             if (isSearchCriteriaSet) {
-                response = await filtrateAndSearchAllJobOffers(query, province, currentPage, safeFilters);
+                // Przekazujemy pusty string zamiast undefined dla location
+                response = await filtrateAndSearchAllJobOffers(query, location || '', province, currentPage, safeFilters);
             } else {
                 response = await fetchAllJobOffers(currentPage);
             }
@@ -90,7 +91,8 @@ function JobOffersPage() {
             const page = parseInt(params.get('page'), 10) || 1;
             const queryFromUrl = params.get('search') || "";
             const province = params.get('province') || "";
-            console.log('URL parameter province:', province);
+            const location = params.get('location') || "";
+            console.log('URL location province:', location);
             let isValid = true;
 
             let currentFilters = {
@@ -137,20 +139,22 @@ function JobOffersPage() {
             setQuery(queryFromUrl);
             setCurrentPage(page);
             setProvince(province);
-            await fetchData(page, queryFromUrl, province, currentFilters);
+            await fetchData(page, queryFromUrl, province, location, currentFilters);
             setIsLoading(false);
         } catch (error) {
             setIsLoading(false);
         }
     };
 
-    const updateUrl = (page, query, province, currentFilters = filters) => {
+    const updateUrl = (page, query, province, location, currentFilters = filters) => {
         const params = new URLSearchParams();
         console.log("Before updating URL with province:", province);
         if (province) {
             params.set('province', province)
         }
-
+        if (location && location !== 'undefined') {
+            params.set('location', location);
+        }
         if (query) {
             params.set('search', query);
         }
@@ -314,6 +318,8 @@ function JobOffersPage() {
         });
     };
 
+
+
     if (isLoading) {
         return (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -411,16 +417,8 @@ function JobOffersPage() {
                                 <option key={key} value={name}>{name}</option>
                             ))}
                         </Form.Select>
-                        {/* <Form.Select
-                            aria-label="Lokalizacja"
-                            value={selectedLocation}
-                            onChange={e => setSelectedLocation(e.target.value)}
-                        >
-                            <option value="">Wybierz lokalizację</option>
-                            {availableLocations.map(location => (
-                                <option key={location} value={location}>{location}</option>
-                            ))}
-                        </Form.Select> */}
+
+
                         <Button variant="outline-secondary" type="submit">
                             Search
                         </Button>

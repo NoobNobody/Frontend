@@ -69,10 +69,15 @@ const searchJobOffersByPositionAndProvince = async (searchQuery, province, page)
 };
 
 
-const filtrateAndSearchAllJobOffers = async (query, province, currentPage, filters) => {
+const filtrateAndSearchAllJobOffers = async (query, province, location, currentPage, filters) => {
     try {
         const params = createFilterParams(filters, currentPage, query);
-        params.set('province', province);
+        if (province && province !== 'undefined') {
+            params.set('province', province);
+        }
+        if (location && location !== 'undefined') {
+            params.set('location', location);
+        }
 
         const response = await axios.get(`http://localhost:8000/api/offers/search/`, { params: params });
         return handleResponse(response);

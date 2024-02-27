@@ -18,11 +18,11 @@ function Router() {
             element: <JobOffersPage />
         },
         {
-            path: "/oferty/kategoria/:categoryId",
+            path: "/offers/category/:categoryId",
             element: <JobOffersByCategory />
         },
         {
-            path: "/kategorie",
+            path: "/categories",
             element: <CategoriesPage />
         },
         {
