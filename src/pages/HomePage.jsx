@@ -20,8 +20,8 @@ function HomePage() {
             const result = await searchJobOffersByPositionAndProvince(query, province, page);
             if (result) {
                 const searchParams = new URLSearchParams({
-                    province,
                     search: query,
+                    province,
                     page: page.toString(),
                 }).toString();
 

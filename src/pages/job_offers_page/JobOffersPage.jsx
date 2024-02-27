@@ -12,7 +12,7 @@ import { scrollToTop } from '../../utils/scrollToTop';
 
 function JobOffersPage() {
     const navigate = useNavigate();
-    const pageLocation = useLocation();
+    const location = useLocation();
 
     const jobOffersData = location.state?.jobOffers || { jobOffers: [], totalPages: 0, currentPage: 1 };
     const [jobOffers, setJobOffers] = useState(Array.isArray(jobOffersData.jobOffers) ? jobOffersData.jobOffers : []);
@@ -20,6 +20,7 @@ function JobOffersPage() {
     const [totalPages, setTotalPages] = useState(jobOffersData.totalPages || 0);
     const [query, setQuery] = useState(location.state?.query || '');
     const [province, setProvince] = useState(location.state?.province || '');
+    const [jobLocation, setJobLocation] = useState(location.state?.jobLocation || '');
     const [searchQuery, setSearchQuery] = useState("");
     const [showAlert, setShowAlert] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -41,18 +42,17 @@ function JobOffersPage() {
         selectedSalaryRange: null,
     });
 
-    const fetchData = async (currentPage, query, location, province, filters) => {
-        console.log("Fetching data with:", { currentPage, query, province, location, filters });
+    const fetchData = async (currentPage, query, jobLocation, province, filters) => {
+        console.log("Fetching data with:", { query, province, jobLocation, currentPage, filters });
         setIsLoading(true);
         try {
             let response;
             const safeFilters = filters || {};
             const areFiltersSet = Object.values(safeFilters).some(value => Array.isArray(value) ? value.length > 0 : value);
-            const isSearchCriteriaSet = query || province || (location && location !== 'undefined') || areFiltersSet;
+            const isSearchCriteriaSet = query || province || (jobLocation && jobLocation !== 'undefined') || areFiltersSet;
 
             if (isSearchCriteriaSet) {
-                // Przekazujemy pusty string zamiast undefined dla location
-                response = await filtrateAndSearchAllJobOffers(query, location || '', province, currentPage, safeFilters);
+                response = await filtrateAndSearchAllJobOffers(query, jobLocation || '', province, currentPage, safeFilters);
             } else {
                 response = await fetchAllJobOffers(currentPage);
             }
@@ -82,17 +82,17 @@ function JobOffersPage() {
 
     useEffect(() => {
         fetchDataFromUrl();
-    }, [pageLocation.search]);
+    }, [location.search]);
 
     const fetchDataFromUrl = async () => {
         setIsLoading(true);
         try {
-            const params = new URLSearchParams(pageLocation.search);
+            const params = new URLSearchParams(location.search);
             const page = parseInt(params.get('page'), 10) || 1;
             const queryFromUrl = params.get('search') || "";
             const province = params.get('province') || "";
-            const location = params.get('location') || "";
-            console.log('URL location province:', location);
+            const jobLocation = params.get('jobLocation') || "";
+
             let isValid = true;
 
             let currentFilters = {
@@ -130,30 +130,32 @@ function JobOffersPage() {
                 setShowAlert(true);
                 setJobOffers([]);
                 setTotalPages(0);
-                navigate(`${pageLocation.pathname}`, { replace: true });
+                navigate(`${location.pathname}`, { replace: true });
                 return;
             }
 
+            setQuery(queryFromUrl);
+            setProvince(province);
+            // setJobLocation(jobLocation);
+            setCurrentPage(page);
             setFilters(currentFilters);
             setAppliedFilters(currentFilters);
-            setQuery(queryFromUrl);
-            setCurrentPage(page);
-            setProvince(province);
-            await fetchData(page, queryFromUrl, province, location, currentFilters);
+            await fetchData(page, queryFromUrl, province, jobLocation, currentFilters);
             setIsLoading(false);
         } catch (error) {
             setIsLoading(false);
         }
     };
 
-    const updateUrl = (page, query, province, location, currentFilters = filters) => {
+    const updateUrl = (page, query, province, jobLocation, currentFilters = filters) => {
         const params = new URLSearchParams();
-        console.log("Before updating URL with province:", province);
+
         if (province) {
             params.set('province', province)
+
         }
-        if (location && location !== 'undefined') {
-            params.set('location', location);
+        if (jobLocation && jobLocation !== 'undefined') {
+            params.set('jobLocation', jobLocation);
         }
         if (query) {
             params.set('search', query);
@@ -172,12 +174,13 @@ function JobOffersPage() {
             }
         });
 
-        navigate(`${pageLocation.pathname}?${params.toString()}`, { replace: true });
+        navigate(`${location.pathname}?${params.toString()}`, { replace: true });
     };
 
 
     const handleChangePage = (page) => {
         setCurrentPage(page);
+        console.log("Paramtery strony: ", { page, query, jobLocation, province, filters });
         updateUrl(page, query, province);
         fetchData(page, query, province);
     };
@@ -204,8 +207,8 @@ function JobOffersPage() {
             };
             setFilters(newFilters);
             setAppliedFilters(newFilters);
-            updateUrl(1, "", "", filters);
-            fetchData(1, "", "", filters);
+            updateUrl(1, "", "", "", filters);
+            fetchData(1, "", "", "", filters);
         } else {
             setQuery("");
         }
@@ -224,8 +227,8 @@ function JobOffersPage() {
             alert("Wybierz zakres zarobków");
         } else if (isAnyFilterApplied) {
             setSearchQuery(query);
-            updateUrl(1, query, province, filters);
-            await fetchData(1, query, province, filters);
+            updateUrl(1, query, "", province, filters);
+            await fetchData(1, query, "", province, filters);
         }
     };
 
@@ -274,8 +277,8 @@ function JobOffersPage() {
         setFilters(newFilters);
         setAppliedFilters(newFilters);
 
-        updateUrl(currentPage, searchQuery, province, newFilters);
-        fetchData(currentPage, searchQuery, province, newFilters);
+        updateUrl(1, searchQuery, "", province, newFilters);
+        fetchData(1, searchQuery, "", province, newFilters);
     };
 
     const areAnyFiltersApplied = () => {

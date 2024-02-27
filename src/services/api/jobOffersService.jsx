@@ -42,20 +42,31 @@ const handleError = (error) => {
 };
 
 const createFilterParams = (filters, page, searchQuery) => {
-    const params = new URLSearchParams({ page, search: searchQuery });
+    const params = new URLSearchParams();
+
+    if (searchQuery && searchQuery !== 'undefined') {
+        params.set('search', searchQuery);
+    }
+
+    if (page && page !== 'undefined') {
+        params.set('page', page.toString());
+    }
 
     Object.entries(filters).forEach(([key, value]) => {
         if (Array.isArray(value)) {
             value.forEach(singleValue => {
-                if (singleValue) params.append(key, singleValue);
+                if (singleValue && singleValue !== 'undefined') {
+                    params.append(key, singleValue);
+                }
             });
-        } else if (value) {
+        } else if (value && value !== 'undefined') {
             params.set(key, value);
         }
     });
 
     return params;
 };
+
 
 const searchJobOffersByPositionAndProvince = async (searchQuery, province, page) => {
     try {
@@ -69,14 +80,15 @@ const searchJobOffersByPositionAndProvince = async (searchQuery, province, page)
 };
 
 
-const filtrateAndSearchAllJobOffers = async (query, province, location, currentPage, filters) => {
+const filtrateAndSearchAllJobOffers = async (query, province, jobLocation, currentPage, filters) => {
     try {
         const params = createFilterParams(filters, currentPage, query);
+
         if (province && province !== 'undefined') {
             params.set('province', province);
         }
-        if (location && location !== 'undefined') {
-            params.set('location', location);
+        if (jobLocation && jobLocation !== 'undefined') {
+            params.set('jobLocation', jobLocation);
         }
 
         const response = await axios.get(`http://localhost:8000/api/offers/search/`, { params: params });
