@@ -1,0 +1,44 @@
+
+.filter-column .active-filters {
+    width: 100%; 
+    padding: 10px;
+    border-radius: 4px;
+    box-sizing: border-box; 
+}
+
+.filter-column .active-filter-badge {
+    display: flex;
+    align-items: center;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    padding: 5px 10px;
+    margin: 5px 0;
+    width: 100%; 
+}
+
+.delete-pointer {
+    cursor: pointer;
+}
+
+.filter-column .clear-filters-button {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    width: 50%;
+    justify-content: center;
+    padding: 5px;
+    border: 1px solid #ddd;
+    background-color: #eed2d2;
+    color: #495057;
+    text-align: center;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    margin-left: auto; 
+    margin-right: auto;
+}
+
+.filter-column .clear-filters-button:hover {
+    background-color: #e2e6ea;
+}

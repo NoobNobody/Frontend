@@ -406,6 +406,7 @@ function JobOffersByCategory() {
                             value={query}
                             onChange={e => setQuery(e.target.value)}
                         />
+
                         <Button variant="outline-secondary" type="submit">
                             Search
                         </Button>

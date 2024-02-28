@@ -1,14 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SearchBar from "../components/SearchBar";
 import { Container, Row, Col, Form, FormControl, InputGroup, Button, Alert } from 'react-bootstrap';
-import { provinceNames } from '../utils/Filters';
-import { searchJobOffersByPositionAndProvince } from '../services/api/jobOffersService';
+import { provinceNames, locationsByProvince } from '../utils/Filters';
+import { fetchCategories, filterAllJobOffers } from '../services/api/jobOffersService';
 import { useNavigate } from 'react-router-dom';
 
 function HomePage() {
 
     const [query, setQuery] = useState('');
     const [province, setProvince] = useState('');
+    const [jobLocation, setJobLocation] = useState('');
+    const [availableJobLocations, setAvailableJobLocations] = useState([]);
+    const [category, setCategory] = useState('');
+    const [categories, setCategories] = useState([]);
     const [page, setPage] = useState(1);
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
@@ -17,32 +21,63 @@ function HomePage() {
         e.preventDefault();
         try {
             setIsLoading(true);
-            const result = await searchJobOffersByPositionAndProvince(query, province, page);
+
+            const categoryName = categories.find(cat => cat.Category_name === category)?.Category_name;
+            const result = await filterAllJobOffers(categoryName, query, jobLocation, province, page);
+
             if (result) {
                 const searchParams = new URLSearchParams({
                     search: query,
+                    jobLocation,
                     province,
+                    categoryName,
                     page: page.toString(),
                 }).toString();
 
-                navigate(`/offers/?${searchParams}`, {
+                navigate(`/offers?${searchParams}`, {
                     state: {
-                        jobOffers: result,
+                        jobOffers: result.jobOffers,
                         query,
+                        jobLocation,
                         province,
+                        categoryName,
                         page,
                     },
                 });
-                setIsLoading(false);
             } else {
                 console.error('Brak danych w odpowiedzi:', result);
-                setIsLoading(false);
             }
         } catch (error) {
             console.error('Błąd podczas wyszukiwania ofert pracy:', error);
+        } finally {
             setIsLoading(false);
         }
     };
+
+
+
+    useEffect(() => {
+        setIsLoading(true);
+
+        fetchCategories()
+            .then(data => {
+                setCategories(data);
+                setIsLoading(false);
+            })
+            .catch(error => {
+                console.error(error);
+                setIsLoading(false);
+            });
+
+        return () => setIsLoading(false);
+    }, []);
+
+    useEffect(() => {
+        if (province === '') {
+            setJobLocation('');
+        }
+        setAvailableJobLocations(province ? locationsByProvince[province] || [] : []);
+    }, [province]);
 
 
     if (isLoading) {
@@ -59,22 +94,46 @@ function HomePage() {
         <main>
             <div className="container mt-5">
                 <InputGroup className="mb-3" as="form" onSubmit={handleSubmit}>
-                    <FormControl
-                        placeholder="Szukaj oferty po stanowisku"
-                        aria-label="Search"
-                        value={query}
-                        onChange={e => setQuery(e.target.value)}
-                    />
-                    <Form.Select aria-label="Województwo" value={province} onChange={e => setProvince(e.target.value)}>
-                        <option value="">Wybierz województwo</option>
-                        {Object.entries(provinceNames).map(([key, name]) => (
-                            <option key={key} value={name}>{name}</option>
-                        ))}
-                    </Form.Select>
-                    <Button variant="outline-secondary" type="submit">
-                        Search
-                    </Button>
+                    <div className="col-4">
+                        <FormControl
+                            placeholder="Szukaj oferty po stanowisku"
+                            aria-label="Search"
+                            value={query}
+                            onChange={e => setQuery(e.target.value)}
+                        />
+                    </div>
+                    <div className="col-2">
+                        <Form.Select aria-label="Województwo" value={province} onChange={e => setProvince(e.target.value)}>
+                            <option value="">Wybierz województwo</option>
+                            {Object.entries(provinceNames).map(([key, name]) => (
+                                <option key={key} value={name}>{name}</option>
+                            ))}
+                        </Form.Select>
+                    </div>
+                    <div className="col-2">
+                        <Form.Select aria-label="Lokalizacja" value={jobLocation} onChange={e => setJobLocation(e.target.value)}>
+                            <option value="">Wybierz lokalizację</option>
+                            {availableJobLocations.map((city, index) => (
+                                <option key={index} value={city}>{city}</option>
+                            ))}
+                        </Form.Select>
+                    </div>
+                    <div className="col-2">
+                        <Form.Select aria-label="Kategoria" value={category} onChange={e => setCategory(e.target.value)}>
+                            <option value="">Wybierz kategorię</option>
+                            {categories.map((cat, index) => (
+                                <option key={index} value={cat.Category_name}>{cat.Category_name}</option>
+                            ))}
+                        </Form.Select>
+                    </div>
+                    <div className="d-flex justify-content-center">
+                        <Button variant="outline-secondary" type="submit">
+                            Szukaj oferty
+                        </Button>
+                    </div>
+
                 </InputGroup>
+
 
                 <div className="text-start mt-4">
                     <h2>Twoja nowa praca</h2>
@@ -94,10 +153,7 @@ function HomePage() {
                 <div className="mt-5">
                     {/* <JobCategories /> */}
                 </div>
-                <div className="mt-5">
-                    XD
-                </div>
-            </div>
+            </div >
         </main >
     );
 }

@@ -13,7 +13,7 @@ function CategoriesPage() {
     useEffect(() => {
         setIsLoading(true);
 
-        axios.get('http://localhost:8000/api/kategorie/')
+        axios.get('http://localhost:8000/api/categories/')
             .then(response => {
                 setCategories(response.data);
                 setIsLoading(false);
