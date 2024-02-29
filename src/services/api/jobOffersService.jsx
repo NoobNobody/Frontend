@@ -1,33 +1,5 @@
 import axios from 'axios';
 
-const fetchAllJobOffers = async (page) => {
-    try {
-        const response = await axios.get(`http://localhost:8000/api/all_offers/`, { params: { page } });
-        return handleResponse(response);
-    } catch (error) {
-        throw new Error(error.response?.data?.message || "Wystąpił błąd podczas pobierania wszystkich ofert pracy.");
-    }
-};
-
-const fetchAllJobOffersByCategory = async (categoryId, page) => {
-    try {
-        const response = await axios.get(`http://localhost:8000/api/oferty/kategoria/${categoryId}/`, { params: { page } });
-        return handleResponse(response);
-    } catch (error) {
-        return handleError(error);
-    }
-};
-
-const filtrateAndSearchJobOffersByCategory = async (categoryId, page, filters, searchQuery = "") => {
-    try {
-        const params = createFilterParams(filters, page, searchQuery);
-        const response = await axios.get(`http://localhost:8000/api/oferty/filtrowane/${categoryId}/`, { params });
-        return handleResponse(response);
-    } catch (error) {
-        throw new Error(error.response?.data?.message || "Wystąpił błąd podczas wyszukiwania ofert pracy.");
-    }
-};
-
 const handleResponse = (response) => {
     const jobOffers = response.data.results || [];
     const totalItems = response.data.count || 0;
@@ -36,9 +8,86 @@ const handleResponse = (response) => {
     return { jobOffers, totalPages, currentPage: parseInt(response.config.params.page) };
 };
 
-const handleError = (error) => {
-    console.error("Error fetching data", error);
-    return { jobOffers: [], totalPages: 0, currentPage: 0 };
+const fetchAllJobOffers = async (page) => {
+    try {
+        const response = await axios.get(`http://localhost:8000/api/offers/`, { params: { page } });
+        return handleResponse(response);
+    } catch (error) {
+        throw new Error(error.response?.data?.message || "Wystąpił błąd podczas pobierania wszystkich ofert pracy.");
+    }
+};
+
+const fetchCategories = async () => {
+    try {
+        const response = await axios.get('http://localhost:8000/api/categories/');
+        console.log(response);
+        return response.data;
+    } catch (error) {
+        console.error('Błąd podczas pobierania kategorii:', error);
+        throw new Error(error.response?.data?.message || "Wystąpił błąd podczas pobierania kategorii.");
+    }
+};
+
+const filterAllJobOffers = async (categoryName, query, jobLocation, province, currentPage, filters) => {
+    try {
+        const params = createFilterParams(filters, currentPage, query);
+
+        if (categoryName && categoryName !== 'undefined') {
+            params.set('categoryName', categoryName);
+        }
+        if (province && province !== 'undefined') {
+            params.set('province', province);
+        }
+        if (jobLocation && jobLocation !== 'undefined') {
+            params.set('jobLocation', jobLocation);
+        }
+        params.set('page', currentPage.toString());
+        const response = await axios.get(`http://localhost:8000/api/offers/filter/`, { params });
+        return handleResponse(response);
+    } catch (error) {
+        console.error('Błąd podczas wykonywania żądania do API:', error);
+        throw new Error(error.response?.data?.message || "Wystąpił błąd podczas wyszukiwania ofert pracy.");
+    }
+};
+
+const analysisByJobOffersWebiste = async () => {
+    try {
+        const response = await axios.get('http://localhost:8000/api/analysis/job_offers');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching job offers analysis data: ', error);
+        throw error;
+    }
+};
+
+const analysisByJobOffersCategory = async () => {
+    try {
+        const response = await axios.get('http://localhost:8000/api/analysis/job_offers_category/');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching job offers category analysis data: ', error);
+        throw error;
+    }
+};
+
+const analysisByAverageEarnings = async () => {
+    try {
+        const response = await axios.get('http://localhost:8000/api/analysis/average_earnings/');
+        return (response.data);
+    } catch (error) {
+        console.error('Error fetching earnings data:', error);
+        throw error;
+    }
+};
+
+const analysisByEarningsHeatmap = async () => {
+    try {
+        const response = await axios.get('http://localhost:8000/api/analysis/earnings_heatmap/');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching earnings heatmap data: ', error);
+        throw error;
+    }
 };
 
 const createFilterParams = (filters, page, searchQuery) => {
@@ -69,71 +118,4 @@ const createFilterParams = (filters, page, searchQuery) => {
     return params;
 };
 
-
-const searchJobOffersByPositionAndProvince = async (searchQuery, province, page) => {
-    try {
-        const response = await axios.get(`http://localhost:8000/api/offers/search/`, {
-            params: { search: searchQuery, province, page }
-        });
-        return handleResponse(response);
-    } catch (error) {
-        throw new Error(error.response?.data?.message || "Wystąpił błąd podczas wyszukiwania ofert pracy.");
-    }
-};
-
-
-const filtrateAndSearchAllJobOffers = async (query, province, jobLocation, currentPage, filters) => {
-    try {
-        const params = createFilterParams(filters, currentPage, query);
-
-        if (province && province !== 'undefined') {
-            params.set('province', province);
-        }
-        if (jobLocation && jobLocation !== 'undefined') {
-            params.set('jobLocation', jobLocation);
-        }
-
-        const response = await axios.get(`http://localhost:8000/api/offers/search/`, { params: params });
-        return handleResponse(response);
-    } catch (error) {
-        throw new Error(error.response?.data?.message || "Wystąpił błąd podczas wyszukiwania ofert pracy.");
-    }
-};
-
-const filterAllJobOffers = async (categoryName, query, jobLocation, province, currentPage, filters) => {
-    try {
-        const params = createFilterParams(filters, currentPage, query);
-
-        if (categoryName && categoryName !== 'undefined') {
-            params.set('categoryName', categoryName);
-        }
-        if (province && province !== 'undefined') {
-            params.set('province', province);
-        }
-        if (jobLocation && jobLocation !== 'undefined') {
-            params.set('jobLocation', jobLocation);
-        }
-        params.set('page', currentPage.toString());
-        const response = await axios.get(`http://localhost:8000/api/offers/zwraca/`, { params });
-        return handleResponse(response);
-    } catch (error) {
-        console.error('Błąd podczas wykonywania żądania do API:', error);
-        throw new Error(error.response?.data?.message || "Wystąpił błąd podczas wyszukiwania ofert pracy.");
-    }
-};
-
-
-
-const fetchCategories = async () => {
-    try {
-        const response = await axios.get('http://localhost:8000/api/categories/');
-        console.log(response);
-        return response.data;
-    } catch (error) {
-        console.error('Błąd podczas pobierania kategorii:', error);
-        throw new Error(error.response?.data?.message || "Wystąpił błąd podczas pobierania kategorii.");
-    }
-};
-
-
-export { filterAllJobOffers, fetchAllJobOffers, fetchAllJobOffersByCategory, filtrateAndSearchJobOffersByCategory, filtrateAndSearchAllJobOffers, searchJobOffersByPositionAndProvince, fetchCategories };
+export { fetchAllJobOffers, filterAllJobOffers, fetchCategories, analysisByJobOffersWebiste, analysisByJobOffersCategory, analysisByAverageEarnings, analysisByEarningsHeatmap };

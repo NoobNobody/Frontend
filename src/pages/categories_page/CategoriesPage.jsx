@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { Container, Row, Col, Card } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import './categories_page.css'
 import categoryImages from '../../utils/categoryImages';
+import { fetchCategories } from '../../services/api/jobOffersService';
 
 function CategoriesPage() {
     const [categories, setCategories] = useState([]);
@@ -13,20 +13,18 @@ function CategoriesPage() {
     useEffect(() => {
         setIsLoading(true);
 
-        axios.get('http://localhost:8000/api/categories/')
-            .then(response => {
-                setCategories(response.data);
+        fetchCategories()
+            .then(data => {
+                setCategories(data);
                 setIsLoading(false);
-                console.log(response.data);
             })
             .catch(error => {
-                console.log(error);
+                console.error(error);
                 setIsLoading(false);
             });
 
         return () => setIsLoading(false);
     }, []);
-
 
     const handleCardClick = (categoryId) => {
         navigate(`/offers/category/${categoryId}`);

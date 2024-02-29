@@ -233,6 +233,7 @@ function JobOffersPage() {
             alert("Wybierz zakres zarobków");
         } else if (isAnyFilterApplied) {
             setSearchQuery(query);
+            scrollToTop();
             updateUrl(categoryName, query, jobLocation, province, 1, filters);
             await fetchData(categoryName, query, jobLocation, province, 1, filters);
         }

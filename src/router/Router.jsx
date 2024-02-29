@@ -3,7 +3,7 @@ import JobOffersPage from '../pages/job_offers_page/JobOffersPage';
 import NotFoundPage from '../pages/NotFoundPage';
 import HomePage from '../pages/HomePage';
 import CategoriesPage from '../pages/categories_page/CategoriesPage';
-import EmployersPage from '../pages/EmployersPage';
+import AnalysisPage from '../pages/AnalysisPage';
 import JobOffersByCategory from '../pages/job_offers_by_category/JobOffersByCategory';
 
 function Router() {
@@ -26,8 +26,8 @@ function Router() {
             element: <CategoriesPage />
         },
         {
-            path: "/pracodawcy",
-            element: <EmployersPage />
+            path: "/analysis",
+            element: <AnalysisPage />
         },
 
     ]);
