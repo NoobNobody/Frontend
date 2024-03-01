@@ -10,7 +10,7 @@ const handleResponse = (response) => {
 
 const fetchAllJobOffers = async (page) => {
     try {
-        const response = await axios.get(`http://localhost:8000/api/offers/`, { params: { page } });
+        const response = await axios.get(`https://jobbufferback.azurewebsites.net/api/offers/`, { params: { page } });
         return handleResponse(response);
     } catch (error) {
         throw new Error(error.response?.data?.message || "Wystąpił błąd podczas pobierania wszystkich ofert pracy.");
@@ -19,7 +19,7 @@ const fetchAllJobOffers = async (page) => {
 
 const fetchCategories = async () => {
     try {
-        const response = await axios.get('http://localhost:8000/api/categories/');
+        const response = await axios.get('https://jobbufferback.azurewebsites.net/api/categories/');
         console.log(response);
         return response.data;
     } catch (error) {
