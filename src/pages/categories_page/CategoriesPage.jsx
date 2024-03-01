@@ -12,9 +12,9 @@ function CategoriesPage() {
 
     useEffect(() => {
         setIsLoading(true);
-
         fetchCategories()
             .then(data => {
+                console.log(data);
                 setCategories(data);
                 setIsLoading(false);
             })
@@ -26,8 +26,8 @@ function CategoriesPage() {
         return () => setIsLoading(false);
     }, []);
 
-    const handleCardClick = (categoryId) => {
-        navigate(`/offers/category/${categoryId}`);
+    const handleCardClick = (categoryName) => {
+        navigate(`/offers?categoryName=${encodeURIComponent(categoryName)}`);
     };
 
     if (isLoading) {
@@ -48,7 +48,7 @@ function CategoriesPage() {
                     const categoryImage = categoryImages[category.Category_name] || categoryImages['default'];
                     return (
                         <Col key={category.id}>
-                            <Card className="card-hoverable" onClick={() => handleCardClick(category.id)}>
+                            <Card className="card-hoverable" onClick={() => handleCardClick(category.Category_name)}>
                                 <Card.Img
                                     src={categoryImage}
                                     alt="Card image"

@@ -90,6 +90,16 @@ const analysisByEarningsHeatmap = async () => {
     }
 };
 
+const analysisByJobOffersPerDay = async () => {
+    try {
+        const response = await axios.get('http://localhost:8000/api/analysis/job_offers_by_day/');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching data: ', error);
+        throw error;
+    }
+};
+
 const createFilterParams = (filters, page, searchQuery) => {
     const params = new URLSearchParams();
 
@@ -118,4 +128,4 @@ const createFilterParams = (filters, page, searchQuery) => {
     return params;
 };
 
-export { fetchAllJobOffers, filterAllJobOffers, fetchCategories, analysisByJobOffersWebiste, analysisByJobOffersCategory, analysisByAverageEarnings, analysisByEarningsHeatmap };
+export { fetchAllJobOffers, filterAllJobOffers, fetchCategories, analysisByJobOffersWebiste, analysisByJobOffersCategory, analysisByAverageEarnings, analysisByEarningsHeatmap, analysisByJobOffersPerDay };

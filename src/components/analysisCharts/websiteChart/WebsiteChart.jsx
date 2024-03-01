@@ -1,7 +1,7 @@
 import React from 'react';
 import { PieChart, Pie, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 
-const COLORS = ['#8884d8', '#83a6ed', '#8dd1e1', '#82ca9d', '#a4de6c', '#d0ed57', '#ffc658'];
+const COLORS = ['#00cc00', '#ff3300', '#663300', '#6600ff', '#0099ff', '#ffcc00', '#006600', '#669999'];
 
 const renderCustomizedLabel = ({
     cx, cy, midAngle, outerRadius, index, payload

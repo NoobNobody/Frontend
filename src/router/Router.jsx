@@ -4,7 +4,6 @@ import NotFoundPage from '../pages/NotFoundPage';
 import HomePage from '../pages/HomePage';
 import CategoriesPage from '../pages/categories_page/CategoriesPage';
 import AnalysisPage from '../pages/AnalysisPage';
-import JobOffersByCategory from '../pages/job_offers_by_category/JobOffersByCategory';
 
 function Router() {
     return createBrowserRouter([
@@ -16,10 +15,6 @@ function Router() {
         {
             path: "/offers",
             element: <JobOffersPage />
-        },
-        {
-            path: "/offers/category/:categoryId",
-            element: <JobOffersByCategory />
         },
         {
             path: "/categories",

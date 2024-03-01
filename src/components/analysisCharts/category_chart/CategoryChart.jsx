@@ -33,7 +33,7 @@ const CategoryChart = ({ data }) => {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="offers_count" fill="#e91018" name="Ilość ofert" />
+                <Bar dataKey="offers_count" fill="#0099ff" name="Ilość ofert" />
             </BarChart></ResponsiveContainer>
 
     );

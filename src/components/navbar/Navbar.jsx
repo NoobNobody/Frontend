@@ -9,7 +9,7 @@ import NavDropdown from 'react-bootstrap/NavDropdown';
 function Navbar() {
     return (
         <ReactNavbar expand="lg" className="bg-body-tertiary">
-            <ReactNavbar.Brand href="#home">
+            <ReactNavbar.Brand href="/">
                 <img
                     src={react}
                     width="30"
@@ -22,21 +22,10 @@ function Navbar() {
             <ReactNavbar.Toggle aria-controls="basic-navbar-nav" />
             <ReactNavbar.Collapse id="basic-navbar-nav" className="navbar__right-menu">
                 <Nav className="ms-auto">
-                    <Nav.Link href="/">Home</Nav.Link>
+                    <Nav.Link href="/">Strona główna</Nav.Link>
                     <Nav.Link href="/offers">Oferty</Nav.Link>
                     <Nav.Link href="/analysis">Analizy</Nav.Link>
                     <Nav.Link href="/categories">Kategorie</Nav.Link>
-                    <NavDropdown title="Dropdown" id="basic-nav-dropdown" >
-                        <NavDropdown.Item href="#action/3.1">Action</NavDropdown.Item>
-                        <NavDropdown.Item href="#action/3.2">
-                            Another action
-                        </NavDropdown.Item>
-                        <NavDropdown.Item href="#action/3.3">Something</NavDropdown.Item>
-                        <NavDropdown.Divider />
-                        <NavDropdown.Item href="#action/3.4">
-                            Separated link
-                        </NavDropdown.Item>
-                    </NavDropdown>
                 </Nav>
             </ReactNavbar.Collapse>
         </ReactNavbar>
