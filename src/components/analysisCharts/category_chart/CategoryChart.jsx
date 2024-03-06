@@ -20,7 +20,7 @@ function CustomizedAxisTick(props) {
 
 const CategoryChart = ({ data }) => {
     return (
-        <ResponsiveContainer width="100%" height={300} className="mt-5">
+        <ResponsiveContainer width="100%" height={500} className="mt-5">
             <h3 style={{ textAlign: 'center' }}>Analiza ofert pracy z danej kategorii</h3>
             <BarChart width={1500} height={400} data={data}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -28,7 +28,7 @@ const CategoryChart = ({ data }) => {
                     dataKey="Category__Category_name"
                     interval={0}
                     tick={<CustomizedAxisTick />}
-                    height={70}
+                    height={150}
                 />
                 <YAxis />
                 <Tooltip />

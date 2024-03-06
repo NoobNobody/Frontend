@@ -73,3 +73,7 @@
 .navbar__right-menu{
     margin-right: 30px; 
 }
+
+.navbar{
+    background: linear-gradient(to right, #e3ffe1, #effff8);
+}

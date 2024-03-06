@@ -1,7 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom';
 import JobOffersPage from '../pages/job_offers_page/JobOffersPage';
 import NotFoundPage from '../pages/NotFoundPage';
-import HomePage from '../pages/HomePage';
+import HomePage from '../pages/home_page/HomePage';
 import CategoriesPage from '../pages/categories_page/CategoriesPage';
 import AnalysisPage from '../pages/AnalysisPage';
 
