@@ -1,23 +1,22 @@
 import React from 'react';
-import react from '../../assets/react.svg';
+import Logo from '../../assets/Logo.webp';
 import './navbar.css';
-import Container from 'react-bootstrap/Container';
 import Nav from 'react-bootstrap/Nav';
 import { Navbar as ReactNavbar } from 'react-bootstrap';
-import NavDropdown from 'react-bootstrap/NavDropdown';
+
 
 function Navbar() {
     return (
         <ReactNavbar expand="lg" className="bg-body-tertiary">
-            <ReactNavbar.Brand href="/">
+            <ReactNavbar.Brand href="/" className="mx-4 d-flex align-items-center">
                 <img
-                    src={react}
-                    width="30"
-                    height="30"
-                    className="d-inline-block align-top navbar__img"
-                    alt="React Bootstrap logo"
-                />{' '}
-                Bufer Prac
+                    src={Logo}
+                    width="70"
+                    height="70"
+                    className="d-inline-block"
+                    alt="JobBuffer logo"
+                />
+                <span className="ms-2">JobBuffer</span>
             </ReactNavbar.Brand>
             <ReactNavbar.Toggle aria-controls="basic-navbar-nav" />
             <ReactNavbar.Collapse id="basic-navbar-nav" className="navbar__right-menu">

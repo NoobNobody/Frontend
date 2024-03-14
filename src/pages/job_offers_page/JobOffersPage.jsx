@@ -355,195 +355,196 @@ function JobOffersPage() {
         setAvailableJobLocations(province ? locationsByProvince[province] || [] : []);
     }, [province]);
 
-    if (isLoading) {
-        return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-                <div className="spinner-border text-primary" role="status">
-                    <span className="visually-hidden">Ładowanie...</span>
-                </div>
-            </div>
-        );
-    }
-
     return (
-        <Container className='mt-2'>
-            <Row className='mt-5'>
-                <Col sm={4} className="filter-column">
-                    {areAnyFiltersApplied() && (
-                        <div className="active-filters">
-                            <h5>Aktywne filtry</h5>
-                            {appliedProvince && (
-                                <div className="active-filter-badge">
-                                    <span className="text-muted">Wybrane województwo:</span>
-                                    <span className="mx-2">{appliedProvince}</span>
-                                    <RiDeleteBinLine
-                                        className="text-danger p-0 ms-auto delete-pointer"
-                                        onClick={() => removeFilter('province', province)}
-                                    />
-                                </div>
-                            )}
-                            {appliedJobLocation && (
-                                <div className="active-filter-badge">
-                                    <span className="text-muted">Wybrana lokalizacja:</span>
-                                    <span className="mx-2">{appliedJobLocation}</span>
-                                    <RiDeleteBinLine
-                                        className="text-danger p-0 ms-auto delete-pointer"
-                                        onClick={() => removeFilter('jobLocation', jobLocation)}
-                                    />
-                                </div>
-                            )}
-                            {appliedCategoryName && (
-                                <div className="active-filter-badge">
-                                    <span className="text-muted">Wybrana kategoria:</span>
-                                    <span className="mx-2">{appliedCategoryName}</span>
-                                    <RiDeleteBinLine
-                                        className="text-danger p-0 ms-auto delete-pointer"
-                                        onClick={() => removeFilter('categoryName', categoryName)}
-                                    />
-                                </div>
-                            )}
-                            {
-                                Object.entries(appliedFilters).map(([key, value]) => {
-                                    if (Array.isArray(value) && value.length === 0) return null;
-                                    if (value === null) return null;
-                                    return (
-                                        <div key={`${key}-${value}`} className="active-filter-badge">
-                                            <span className="text-muted">{filterCategories[key]}:</span>
-                                            <span className="mx-2">{filtersCombined[value] || value}</span>
+        <main className="main_page">
+            {isLoading ? (
+                <div className="loading-container" style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Ładowanie...</span>
+                    </div>
+                </div>
+            ) : (
+                <Container>
+                    <Row>
+                        <Col sm={4} className="filter-column">
+                            {areAnyFiltersApplied() && (
+                                <div className="active-filters">
+                                    <h5>Aktywne filtry</h5>
+                                    {appliedProvince && (
+                                        <div className="active-filter-badge">
+                                            <span className="text-muted">Wybrane województwo:</span>
+                                            <span className="mx-2">{appliedProvince}</span>
                                             <RiDeleteBinLine
                                                 className="text-danger p-0 ms-auto delete-pointer"
-                                                onClick={() => removeFilter(key)}
+                                                onClick={() => removeFilter('province', province)}
                                             />
                                         </div>
-                                    );
-                                })
-                            }
-                            <div className="clear-filters-button" onClick={clearAllFilters}>
-                                <i className="bi bi-trash"></i> Wyczyść filtry
-                            </div>
-                        </div>
-                    )}
-                    <ElementFilter
-                        filterLabel="Data dodania"
-                        filterOptions={dateFilters}
-                        selectedFilters={filters.selectedDate}
-                        onFilterChange={(value) => handleFilterChange('selectedDate', value)}
-                    />
-                    <SalaryTypeFilter
-                        filterLabel="Zarobki"
-                        filterOptions={salaryTypes}
-                        selectedFilters={filters.selectedSalaryType}
-                        onFilterChange={handleSalaryTypeChange}
-                    />
-                    {filters.selectedSalaryType && salaryRange[filters.selectedSalaryType + '_range'] && (
-                        <div className="salary-range-filters">
-                            {salaryRange[filters.selectedSalaryType + '_range'].map(range => {
-                                return (
-                                    <Form.Check
-                                        key={range}
-                                        type="radio"
-                                        id={`salary-range-filter-${range}`}
-                                        name="salary-range-filter"
-                                        label={range}
-                                        checked={filters.selectedSalaryRange === range}
-                                        onChange={() => setFilters(prevFilters => ({
-                                            ...prevFilters,
-                                            selectedSalaryRange: range
-                                        }))}
-                                    />
-                                );
-                            })}
-                        </div>
-                    )}
+                                    )}
+                                    {appliedJobLocation && (
+                                        <div className="active-filter-badge">
+                                            <span className="text-muted">Wybrana lokalizacja:</span>
+                                            <span className="mx-2">{appliedJobLocation}</span>
+                                            <RiDeleteBinLine
+                                                className="text-danger p-0 ms-auto delete-pointer"
+                                                onClick={() => removeFilter('jobLocation', jobLocation)}
+                                            />
+                                        </div>
+                                    )}
+                                    {appliedCategoryName && (
+                                        <div className="active-filter-badge">
+                                            <span className="text-muted">Wybrana kategoria:</span>
+                                            <span className="mx-2">{appliedCategoryName}</span>
+                                            <RiDeleteBinLine
+                                                className="text-danger p-0 ms-auto delete-pointer"
+                                                onClick={() => removeFilter('categoryName', categoryName)}
+                                            />
+                                        </div>
+                                    )}
+                                    {
+                                        Object.entries(appliedFilters).map(([key, value]) => {
+                                            if (Array.isArray(value) && value.length === 0) return null;
+                                            if (value === null) return null;
+                                            return (
+                                                <div key={`${key}-${value}`} className="active-filter-badge">
+                                                    <span className="text-muted">{filterCategories[key]}:</span>
+                                                    <span className="mx-2">{filtersCombined[value] || value}</span>
+                                                    <RiDeleteBinLine
+                                                        className="text-danger p-0 ms-auto delete-pointer"
+                                                        onClick={() => removeFilter(key)}
+                                                    />
+                                                </div>
+                                            );
+                                        })
+                                    }
+                                    <div className="clear-filters-button" onClick={clearAllFilters}>
+                                        <i className="bi bi-trash"></i> Wyczyść filtry
+                                    </div>
+                                </div>
+                            )}
+                            <ElementFilter
+                                filterLabel="Data dodania"
+                                filterOptions={dateFilters}
+                                selectedFilters={filters.selectedDate}
+                                onFilterChange={(value) => handleFilterChange('selectedDate', value)}
+                            />
+                            <SalaryTypeFilter
+                                filterLabel="Zarobki"
+                                filterOptions={salaryTypes}
+                                selectedFilters={filters.selectedSalaryType}
+                                onFilterChange={handleSalaryTypeChange}
+                            />
+                            {filters.selectedSalaryType && salaryRange[filters.selectedSalaryType + '_range'] && (
+                                <div className="salary-range-filters">
+                                    {salaryRange[filters.selectedSalaryType + '_range'].map(range => {
+                                        return (
+                                            <Form.Check
+                                                key={range}
+                                                type="radio"
+                                                id={`salary-range-filter-${range}`}
+                                                name="salary-range-filter"
+                                                label={range}
+                                                checked={filters.selectedSalaryRange === range}
+                                                onChange={() => setFilters(prevFilters => ({
+                                                    ...prevFilters,
+                                                    selectedSalaryRange: range
+                                                }))}
+                                            />
+                                        );
+                                    })}
+                                </div>
+                            )}
 
 
-                    <ObjectFilter
-                        filterLabel="Model pracy"
-                        filterOptions={jobModelFilters}
-                        selectedFilters={filters.selectedJobModel}
-                        onFilterChange={(value) => handleFilterChange('selectedJobModel', value)}
-                    />
-                    <ObjectFilter
-                        filterLabel="Typ pracy"
-                        filterOptions={jobTypeFilters}
-                        selectedFilters={filters.selectedJobType}
-                        onFilterChange={(value) => handleFilterChange('selectedJobType', value)}
-                    />
-                    <ObjectFilter
-                        filterLabel="Czas pracy"
-                        filterOptions={jobTimeFilters}
-                        selectedFilters={filters.selectedJobTime}
-                        onFilterChange={(value) => handleFilterChange('selectedJobTime', value)}
-                    />
-                    <Button onClick={handleFilterSubmit} variant="primary">Szukaj oferty</Button>
-                </Col>
-                <Col sm={8}>
-                    <InputGroup className="mb-3" as="form" onSubmit={handleSearchSubmit}>
-                        <div className="col-4">
-                            <InputGroup>
-                                <FormControl
-                                    placeholder="Szukaj oferty po stanowisku"
-                                    aria-label="Search"
-                                    value={query}
-                                    onChange={e => setQuery(e.target.value)}
-                                />
-                                {query && (
-                                    <InputGroup.Text
-                                        variant="outline-secondary"
-                                        onClick={clearSearch}
-                                        aria-label="Clear search"
-                                        style={{ cursor: 'pointer' }}
-                                    >
-                                        &times;
-                                    </InputGroup.Text>
-                                )}
+                            <ObjectFilter
+                                filterLabel="Model pracy"
+                                filterOptions={jobModelFilters}
+                                selectedFilters={filters.selectedJobModel}
+                                onFilterChange={(value) => handleFilterChange('selectedJobModel', value)}
+                            />
+                            <ObjectFilter
+                                filterLabel="Typ pracy"
+                                filterOptions={jobTypeFilters}
+                                selectedFilters={filters.selectedJobType}
+                                onFilterChange={(value) => handleFilterChange('selectedJobType', value)}
+                            />
+                            <ObjectFilter
+                                filterLabel="Czas pracy"
+                                filterOptions={jobTimeFilters}
+                                selectedFilters={filters.selectedJobTime}
+                                onFilterChange={(value) => handleFilterChange('selectedJobTime', value)}
+                            />
+                            <Button onClick={handleFilterSubmit} variant="primary">Szukaj oferty</Button>
+                        </Col>
+                        <Col sm={8}>
+                            <InputGroup className="mb-3" as="form" onSubmit={handleSearchSubmit}>
+                                <div className="col-4">
+                                    <InputGroup>
+                                        <FormControl
+                                            placeholder="Szukaj oferty po stanowisku"
+                                            aria-label="Search"
+                                            value={query}
+                                            onChange={e => setQuery(e.target.value)}
+                                        />
+                                        {query && (
+                                            <InputGroup.Text
+                                                variant="outline-secondary"
+                                                onClick={clearSearch}
+                                                aria-label="Clear search"
+                                                style={{ cursor: 'pointer' }}
+                                            >
+                                                &times;
+                                            </InputGroup.Text>
+                                        )}
+                                    </InputGroup>
+                                </div>
+                                <div className="col-2">
+                                    <Form.Select aria-label="Województwo" value={province} onChange={e => setProvince(e.target.value)}>
+                                        <option value="">Wybierz województwo</option>
+                                        {Object.entries(provinceNames).map(([key, name]) => (
+                                            <option key={key} value={name}>{name}</option>
+                                        ))}
+                                    </Form.Select>
+                                </div>
+                                <div className="col-2">
+                                    <Form.Select aria-label="Lokalizacja" value={jobLocation} onChange={e => setJobLocation(e.target.value)}>
+                                        <option value="">Wybierz lokalizację</option>
+                                        {availableJobLocations.map((city, index) => (
+                                            <option key={index} value={city}>{city}</option>
+                                        ))}
+                                    </Form.Select>
+                                </div>
+                                <div className="col-2">
+                                    <Form.Select aria-label="Kategoria" value={categoryName} onChange={e => setCategoryName(e.target.value)}>
+                                        <option value="">Wybierz kategorię</option>
+                                        {categories.map((cat, index) => (
+                                            <option key={index} value={cat.Category_name}>{cat.Category_name}</option>
+                                        ))}
+                                    </Form.Select>
+                                </div>
+                                <div className="d-flex justify-content-center">
+                                    <Button variant="custom-primary" type="submit">
+                                        Szukaj oferty
+                                    </Button>
+                                </div>
+
                             </InputGroup>
-                        </div>
-                        <div className="col-2">
-                            <Form.Select aria-label="Województwo" value={province} onChange={e => setProvince(e.target.value)}>
-                                <option value="">Wybierz województwo</option>
-                                {Object.entries(provinceNames).map(([key, name]) => (
-                                    <option key={key} value={name}>{name}</option>
-                                ))}
-                            </Form.Select>
-                        </div>
-                        <div className="col-2">
-                            <Form.Select aria-label="Lokalizacja" value={jobLocation} onChange={e => setJobLocation(e.target.value)}>
-                                <option value="">Wybierz lokalizację</option>
-                                {availableJobLocations.map((city, index) => (
-                                    <option key={index} value={city}>{city}</option>
-                                ))}
-                            </Form.Select>
-                        </div>
-                        <div className="col-2">
-                            <Form.Select aria-label="Kategoria" value={categoryName} onChange={e => setCategoryName(e.target.value)}>
-                                <option value="">Wybierz kategorię</option>
-                                {categories.map((cat, index) => (
-                                    <option key={index} value={cat.Category_name}>{cat.Category_name}</option>
-                                ))}
-                            </Form.Select>
-                        </div>
-                        <div className="d-flex justify-content-center">
-                            <Button variant="outline-secondary" type="submit">
-                                Szukaj oferty
-                            </Button>
-                        </div>
+                            {showAlert && (
+                                <Alert variant="danger" onClose={() => setShowAlert(false)} dismissible>
+                                    Nie znaleziono ofert pasujących do kryteriów.
+                                </Alert>
+                            )}
+                            {jobOffers.map((offer, index) => (
+                                <JobCard key={offer.id || index} offer={offer} />
+                            ))}
+                            <div className="d-flex justify-content-center" style={{ marginTop: "20px" }}>
+                                <CustomPagination currentPage={currentPage} totalPages={totalPages} onPageChange={handleChangePage} />
+                            </div>
+                        </Col>
+                    </Row>
+                </Container >
+            )}
+        </main>
 
-                    </InputGroup>
-                    {showAlert && (
-                        <Alert variant="danger" onClose={() => setShowAlert(false)} dismissible>
-                            Nie znaleziono ofert pasujących do kryteriów.
-                        </Alert>
-                    )}
-                    {jobOffers.map((offer, index) => (
-                        <JobCard key={offer.id || index} offer={offer} />
-                    ))}
-                    <div className="d-flex justify-content-center" style={{ marginTop: "20px" }}>
-                        <CustomPagination currentPage={currentPage} totalPages={totalPages} onPageChange={handleChangePage} />
-                    </div>
-                </Col>
-            </Row>
-        </Container >
     );
 }
 

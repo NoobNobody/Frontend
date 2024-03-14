@@ -57,7 +57,7 @@ function AnalysisPage() {
         }
     };
 
-    const fetchOffersyPerDay = async () => {
+    const fetchOffersPerDay = async () => {
         try {
             const offersPerDayData = await analysisByJobOffersPerDay();
             setOffersPerDayData(offersPerDayData);
@@ -72,18 +72,17 @@ function AnalysisPage() {
         fetchEarningsData();
         fetchCategoryData();
         fetchWebsiteData();
-        fetchOffersyPerDay();
-
+        fetchOffersPerDay();
     }, []);
 
     return (
-        <>
+        <main className="main_page_analysis">
             <WebsiteChart data={websiteData} />
             <CategoryChart data={categoryData} />
             <EarningsChart data={earningsData} />
             <HeatMapChart data={heatmapData} />
             <OffersPerDayChart data={offersPerDayData} />
-        </>
+        </main>
     );
 }
 

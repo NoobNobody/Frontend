@@ -1,17 +1,15 @@
-.btn-outline-primary {
-    color: #007bff;
-    border-color: #007bff;
-  }
-  
-  .btn-outline-primary:hover {
-    color: #fff;
-    background-color: #007bff;
-  }
-  
-  .btn-outline-primary.active,
-  .btn-outline-primary:active,
-  .btn-outline-primary:checked {
-    color: #fff;
-    background-color: #007bff;
-    border-color: #007bff;
-  }
+.btn-custom-primary.btn {
+  background-color: #ff9c3f !important; 
+  border-color: #ffa189 !important; 
+}
+
+.btn-custom-primary.btn:hover {
+  background-color: #ffdc3f !important;
+}
+
+.btn-custom-primary.btn:active,
+.btn-custom-primary.btn.active,
+.btn-custom-primary.btn.checked {
+  background-color: #d6cd48 !important; 
+  border-color: #acb845 !important;
+}
