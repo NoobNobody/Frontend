@@ -30,44 +30,43 @@ function CategoriesPage() {
         navigate(`/offers?categoryName=${encodeURIComponent(categoryName)}`);
     };
 
-    if (isLoading) {
-        return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-                <div className="spinner-border text-primary" role="status">
-                    <span className="visually-hidden">Ładowanie...</span>
-                </div>
-            </div>
-        );
-    }
-
     return (
-        <Container fluid>
-            <h2>Kategorie</h2>
-            <Row xs={1} md={4} className="g-4">
-                {categories.map((category) => {
-                    const categoryImage = categoryImages[category.Category_name] || categoryImages['default'];
-                    return (
-                        <Col key={category.id}>
-                            <Card className="card-hoverable" onClick={() => handleCardClick(category.Category_name)}>
-                                <Card.Img
-                                    src={categoryImage}
-                                    alt="Card image"
-                                    className="categories_img"
-                                />
-                                <Card.ImgOverlay className="d-flex">
-                                    <div className="card_bottom_gradient">
-                                        <Card.Title>{category.Category_name}</Card.Title>
-                                        <Card.Text>
-                                            Ilość ofert: {category.offers_count}
-                                        </Card.Text>
-                                    </div>
-                                </Card.ImgOverlay>
-                            </Card>
-                        </Col>
-                    );
-                })}
-            </Row>
-        </Container>
+        <main className="main_page">
+            {isLoading ? (
+                <div className="loading-container" style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Ładowanie...</span>
+                    </div>
+                </div>
+            ) : (
+                <Container fluid>
+                    <Row xs={1} md={4} className="g-4">
+                        {categories.map((category) => {
+                            const categoryImage = categoryImages[category.Category_name] || categoryImages['default'];
+                            return (
+                                <Col key={category.id}>
+                                    <Card className="card-hoverable" onClick={() => handleCardClick(category.Category_name)}>
+                                        <Card.Img
+                                            src={categoryImage}
+                                            alt="Card image"
+                                            className="categories_img"
+                                        />
+                                        <Card.ImgOverlay className="d-flex">
+                                            <div className="card_bottom_gradient">
+                                                <Card.Title>{category.Category_name}</Card.Title>
+                                                <Card.Text>
+                                                    Ilość ofert: {category.offers_count}
+                                                </Card.Text>
+                                            </div>
+                                        </Card.ImgOverlay>
+                                    </Card>
+                                </Col>
+                            );
+                        })}
+                    </Row>
+                </Container>
+            )}
+        </main>
     );
 }
 

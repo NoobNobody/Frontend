@@ -1,7 +1,7 @@
 import React from 'react';
 import { PieChart, Pie, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 
-const COLORS = ['#00cc00', '#ff3300', '#663300', '#6600ff', '#0099ff', '#ffcc00', '#006600', '#669999'];
+const COLORS = ['#00cc00', '#ff3300', '#663300', '#6600ff', '#0099ff', '#332F2F', '#006600', '#669999'];
 
 const renderCustomizedLabel = ({
     cx, cy, midAngle, outerRadius, index, payload
@@ -25,7 +25,7 @@ const renderCustomizedLabel = ({
 };
 
 const WebsiteChart = ({ data }) => (
-    <ResponsiveContainer width="100%" height={400}>
+    <ResponsiveContainer width="100%" height={600}>
         <h3 style={{ textAlign: 'center' }}>Analiza ofert pracy z danej strony internetowej</h3>
         <PieChart>
             <Pie
