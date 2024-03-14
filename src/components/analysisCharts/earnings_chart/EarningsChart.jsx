@@ -7,7 +7,7 @@ function EarningsChart({ data, color, name }) {
     };
 
     return (
-        <ResponsiveContainer width="100%" height={400}>
+        <ResponsiveContainer width="100%" height={400} >
             <BarChart data={data}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
@@ -34,7 +34,7 @@ function AnalysisPage({ data }) {
     ];
 
     return (
-        <ResponsiveContainer height={400} className="mt-5" style={{ marginTop: '25px' }}>
+        <ResponsiveContainer height={400} className="category-analise-container">
             <h3 style={{ textAlign: 'center' }}>Analiza zarobków</h3>
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                 <div style={{ width: '50%' }}>

@@ -20,11 +20,11 @@ const HeatmapLayer = ({ data }) => {
         });
 
         const heatLayer = L.heatLayer(points, {
-            radius: 30,
-            blur: 25,
+            radius: 10,
+            blur: 8,
             maxZoom: 1,
             max: 1,
-            minOpacity: 0.7
+            minOpacity: 0.8
         }).addTo(map);
 
         return () => {

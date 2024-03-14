@@ -1,5 +1,6 @@
 import React from 'react';
 import { ButtonGroup, ToggleButton } from 'react-bootstrap';
+import './salary_type_filter.css';
 
 const SalaryTypeFilter = ({ filterLabel, filterOptions, selectedFilters, onFilterChange }) => {
     return (
@@ -10,11 +11,12 @@ const SalaryTypeFilter = ({ filterLabel, filterOptions, selectedFilters, onFilte
                     <ToggleButton
                         key={key}
                         type="radio"
-                        variant="outline-primary"
+                        variant="custom-primary"
                         id={`generic-filter-${key}`}
                         name="salary"
                         value={key}
                         checked={selectedFilters === key}
+                        className={`me-2 ${selectedFilters === key ? 'active' : ''}`}
                         onChange={(e) => onFilterChange(e.currentTarget.value)}
                     >
                         {value}
