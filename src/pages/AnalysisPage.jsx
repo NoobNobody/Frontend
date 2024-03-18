@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { analysisByJobOffersWebiste, analysisByJobOffersCategory, analysisByAverageEarnings, analysisByEarningsHeatmap, analysisByJobOffersPerDay } from '../services/api/jobOffersService';
 import EarningsChart from '../components/analysisCharts/earnings_chart/EarningsChart';
-import WebsiteChart from '../components/analysisCharts/websiteChart/WebsiteChart';
+import WebsiteChart from '../components/analysisCharts/website_chart/WebsiteChart';
 import CategoryChart from '../components/analysisCharts/category_chart/CategoryChart';
 import HeatMapChart from '../components/analysisCharts/heatmap_chart/HeatMapChart';
 import OffersPerDayChart from '../components/analysisCharts/offers_per_day_chart/OffersPerDayChart';
