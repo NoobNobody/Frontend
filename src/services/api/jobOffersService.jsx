@@ -110,7 +110,7 @@ const analysisByJobOffersPerDay = async () => {
 
 const jobOffersLocationMap = async () => {
     try {
-        const response = await axios.get('https://jobbufferback.azurewebsites.net/api/analysis/job_offers_location_map/');
+        const response = await axios.get('https://jobbufferback.azurewebsites.net/api/job_offers_location_map/');
         // const response = await axios.get('http://127.0.0.1:8000/api/job_offers_location_map/');
         return response.data;
     } catch (error) {
